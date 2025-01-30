@@ -29,12 +29,18 @@ const CustomText = ({
     />
   </View>
 );
+
+
+
+
+
 const styles = StyleSheet.create({
   inputText: {
     fontFamily: "PoppinsSemiBold",
     color: "#00695C",
     fontSize: 14,
   },
+
   input: {
     height: 50,
     borderColor: "gray",

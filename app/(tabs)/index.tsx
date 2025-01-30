@@ -3,111 +3,130 @@ import {
   SafeAreaView,
   Text,
   View,
-  Image,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
+  Alert,
+  ActivityIndicator,
+  Image
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
-import Animated, { FadeInUp } from "react-native-reanimated";
-import CustomDropdown from "@/components/CustomDropdown";
-import { users_opts } from "./static_data/data";
+import { useAuth } from "./static_data/AuthContext"; // Import useAuth
 
-const App = () => {
+const LoginScreen = () => {
   const router = useRouter();
-  const isPermissionGranted = true;
+  const { setUser } = useAuth(); // Get setUser from AuthContext
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [userAccounts, setUserAccounts] = useState({
-    user: "",
-  });
-
-  const handleInputChange = (name, value) => {
-    setUserAccounts((prev) => ({ ...prev, [name]: value }));
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter both email and password.");
+      return;
+    }
+  
+    setIsLoading(true);
+    try {
+      const url = "https://b9a0-180-232-3-93.ngrok-free.app/api/login";
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      const data = await response.json();
+      setIsLoading(false);
+  
+      if (response.ok && data.api_token) {
+        Alert.alert("Success", "Login successful!");
+        
+        setUser(data); // Store user data globally
+        
+        router.push("/(tabs)/scanner");
+      } else {
+        Alert.alert("Error", data.message || "Invalid credentials.");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      Alert.alert("Error", "Failed to connect to the server.");
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "android" ? "padding" : "height"}
-    >
-      <Stack.Screen
-        options={{
-          title: "DENR IV-A (CALABARZON)",
-          headerShown: false,
-          headerStyle: { backgroundColor: "#0f766e" },
-          headerTintColor: "#fff",
-          headerTitleStyle: { fontWeight: "bold" },
-        }}
+    <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{ title: "Login", headerShown: false }} />
+      <Image
+        style={styles.img}
+      source={require("../../assets/images/denr_logo.png")}
       />
-
-      <Animated.View
-        entering={FadeInUp.delay(200).duration(2000).springify()}
-        style={styles.mainContent}
-      >
-        {/* Background Image */}
-        <Image
-          style={styles.backgroundImage}
-          source={require("../../assets/images/background.jpg")}
+      <Text style={styles.img_title}>Department of Environment and Natural Resources</Text>
+      <Text style={styles.img_title}>Region IV-A (CALABARZON)</Text>
+      <Image
+        style={styles.backgroundImage}
+        source={require("../../assets/images/background.jpg")}
+      />
+      <View style={styles.content}>
+        <Text style={styles.title}>ICT Inventory System</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Username"
+          placeholderTextColor="gray"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
         />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="gray"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
 
-      
-
-        {/* Title */}
-        <Animated.Text
-          entering={FadeInUp.delay(1000).duration(1000).springify()}
-          style={styles.title}
-        >
-          Welcome to CodeTrack
-        </Animated.Text>
-
-        {/* Buttons Section */}
-        <Animated.View
-          entering={FadeInUp.delay(1000).duration(2000).springify()}
-          style={styles.buttonSection}
-        >
-          {/* Dropdown */}
-       
-
-          {/* Scan QR Code Button */}
-          <TouchableOpacity
-            onPress={() => {
-              if (isPermissionGranted) {
-                router.push("/(tabs)/scanner");
-              }
-            }}
-            disabled={!isPermissionGranted}
-            style={[
-              styles.button,
-              { opacity: !isPermissionGranted ? 0.5 : 1 },
-            ]}
-          >
-            <Text style={styles.buttonText}>Scan QR Code</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </Animated.View>
-
-      {/* Footer Section */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>All Rights Reserved 2025</Text>
-        <Text style={styles.footerText}>Version 1.0.0</Text>
-        <Text style={styles.footerText}>Developed by: RICT-PMD</Text>
+        
       </View>
-    </KeyboardAvoidingView>
+  
+    </SafeAreaView>
   );
 };
 
-export default App;
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  mainContent: {
-    flex: 1,
+    flex: 2,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "white",
+  },
+  content: {
+    width: "80%",
+    alignItems: "center",
+    top:-50
+  },
+  img_title:{
+    fontFamily:'Times New Roman',
+    fontSize:16,
+    bottom:300,
+    right:-50,
+    zIndex:40
+  },
+  img:{
+    width:100,
+    height:100,
+    bottom:220,
+    right:160,
+    zIndex:40
   },
   backgroundImage: {
     position: "absolute",
@@ -115,54 +134,35 @@ const styles = StyleSheet.create({
     width: "100%",
     resizeMode: "cover",
   },
-  logo: {
-  
-    height: 300,
-    width: 300,
-    bottom: 50,
-    opacity:0.1
-  },
   title: {
-    fontFamily: "PoppinsRegular",
-    color: "#1B5E20",
-    fontSize: 32,
-    position: "absolute",
-    top:390,
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 20,
+    fontFamily:"PoppinsRegular"
   },
-  buttonSection: {
+  input: {
     width: "100%",
-    paddingHorizontal: 85,
-    position: "absolute",
-    bottom: 80,
-  },
-  dropdownContainer: {
-    marginBottom: 250,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    fontFamily:"PoppinsRegular"
   },
   button: {
+    width: "100%",
+    height: 50,
     backgroundColor: "#00695C",
-    borderRadius: 20,
-    paddingVertical: 15,
-    bottom:300
-  },
-  buttonText: {
-    fontFamily: "PoppinsLight",
-    color: "white",
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 10,
-    left: 0,
-    right: 0,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 8,
   },
-  footerText: {
-    fontFamily: "PoppinsRegular",
-    fontSize: 14,
-    color: "#3645aa",
-    textAlign: "center",
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
+
+export default LoginScreen;

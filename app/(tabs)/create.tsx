@@ -31,6 +31,7 @@ import {
 
 import axios from "axios";
 import EquipmentStats from "@/components/EquipmentStats";
+import { useAuth } from "./static_data/AuthContext";
 
 const Create = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
@@ -94,6 +95,7 @@ const Create = () => {
     monitor1Status: "",
     monitor2Status: "",
   });
+  const { user } = useAuth();
 
   const [data, setData] = useState([]);
   const [workData, setWorkData] = useState([]);
@@ -223,6 +225,7 @@ const Create = () => {
       }
 
       const result = await response.json();
+      console.log(result)
 
       if (Array.isArray(result) && result.length > 0) {
         const [item] = result;
@@ -324,7 +327,6 @@ const Create = () => {
         />
 
         <View style={styles.placeholder}>
-
           <View style={styles.tabs}>
             {tabs.map(({ name, icon }, index) => {
               const isActive = name === val;
@@ -370,8 +372,6 @@ const Create = () => {
             <ActivityIndicator size="large" color="#0000ff" />
           ) : val === "Dashboard" ? (
             <EquipmentStats color="#00695C" />
-
-          
           ) : val === "General Information" ? (
             <ScrollView
               contentContainerStyle={styles.content}
@@ -480,15 +480,17 @@ const Create = () => {
               />
 
               <View style={styles.buttonWrapper}>
-                <Text style={styles.buttonText} onPress={updateUser}>
-                  <AntDesign
-                    style={styles.icon}
-                    color={isFocus ? "blue" : "black"}
-                    name="save"
-                    size={25}
-                  />
-                  {isLoading ? "Updating..." : "Update"}
-                </Text>
+                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                  <Text style={styles.buttonText} onPress={updateUser}>
+                    <AntDesign
+                      style={styles.icon}
+                      color={isFocus ? "blue" : "black"}
+                      name="save"
+                      size={25}
+                    />
+                    {isLoading ? "Updating..." : "Update"}
+                  </Text>
+                ) : null}
               </View>
             </ScrollView>
           ) : val === "Specification" ? (
@@ -580,16 +582,20 @@ const Create = () => {
                 setFocusedInput={setFocusedInput}
               />
               <View style={styles.buttonWrapper}>
-                <Text style={styles.buttonText} onPress={updateUser}>
-                  <AntDesign
-                    style={styles.icon}
-                    color={isFocus ? "blue" : "black"}
-                    name="save"
-                    size={25}
-                  />
-                  {isLoading ? "Updating..." : "Update"}
-                </Text>
+                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                  <Text style={styles.buttonText} onPress={updateUser}>
+                    <AntDesign
+                      style={styles.icon}
+                      color={isFocus ? "blue" : "black"}
+                      name="save"
+                      size={25}
+                    />
+                    {isLoading ? "Updating..." : "Update"}
+                  </Text>
+                ) : null}
               </View>
+              
+             
             </ScrollView>
           ) : val === "Peripherals" ? (
             <ScrollView
@@ -792,16 +798,19 @@ const Create = () => {
                 setFocusedInput={setFocusedInput}
               />
               <View style={styles.buttonWrapper}>
-                <Text style={styles.buttonText} onPress={updatePeripherals}>
-                  <AntDesign
-                    style={styles.icon}
-                    color={isFocus ? "blue" : "black"}
-                    name="save"
-                    size={25}
-                  />
-                  {isLoading ? "Updating..." : "Update"}
-                </Text>
+                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                  <Text style={styles.buttonText} onPress={updatePeripherals}>
+                    <AntDesign
+                      style={styles.icon}
+                      color={isFocus ? "blue" : "black"}
+                      name="save"
+                      size={25}
+                    />
+                    {isLoading ? "Updating..." : "Update"}
+                  </Text>
+                ) : null}
               </View>
+              
             </ScrollView>
           ) : null}
         </View>
@@ -915,7 +924,7 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsRegular",
   },
   content: {
-    marginTop: 20,
+    marginTop: 40,
     paddingBottom: 20,
   },
   icon: {
