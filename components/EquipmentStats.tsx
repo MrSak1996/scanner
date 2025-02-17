@@ -4,45 +4,48 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Alert,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { Stack, useRouter } from "expo-router";
+import { useAuth } from "../app/(tabs)/static_data/AuthContext";
 
-const API_BASE_URL = "https://b9a0-180-232-3-93.ngrok-free.app/api";
+const API_BASE_URL = "https://d98c-180-232-3-94.ngrok-free.app/api";
 
 const EquipmentStats = ({ color }) => {
-    const router = useRouter();
-  
+  const router = useRouter();
+  const { user } = useAuth();
+
   const [stats, setStats] = useState([
     {
       title: "Total ICT Equipment",
       opacity: 1.5,
       total: 0,
       icon: "laptop",
-      api: "/getInventoryData",
+      api: `/vw-gen-info?designation=${user?.roles}`,
     },
     {
       title: "Total Serviceable Equipment",
-      opacity: 0.9,
+      opacity: 0.8,
       total: 0,
       icon: "tool",
-      api: "/getCountStatus",
+      api: `/getCountStatus?designation=${user?.roles}`,
     },
     {
       title: "Total Unserviceable Equipment",
-      opacity: 0.9,
+      opacity: 0.7,
       total: 0,
       icon: "closecircleo",
-      api: "/getCountStatus",
+      api: `/getCountStatus?designation=${user?.roles}`,
     },
     {
       title: "Total Outdated Equipment",
-      opacity: 0.9,
+      opacity: 0.6,
       total: 0,
       icon: "hourglass",
-      api: "/getOutdatedEquipment",
+      api: `/getOutdatedEquipment?designation=${user?.roles}`,
     },
   ]);
 
@@ -50,22 +53,35 @@ const EquipmentStats = ({ color }) => {
 
   useEffect(() => {
     const fetchData = async () => {
+
       try {
         const updatedStats = await Promise.all(
           stats.map(async (item) => {
             const response = await fetch(`${API_BASE_URL}${item.api}`);
-            const data = await response.json();
 
-            // Special handling for getCountStatus response
-            if (item.api === "/getCountStatus") {
-              if (item.title.includes("Serviceable")) {
-                return { ...item, total: data.serviceable_count || 0 };
-              } else if (item.title.includes("Unserviceable")) {
-                return { ...item, total: data.unserviceable_count || 0 };
-              }
+            const data = await response.json();
+            if (item.api === `/vw-gen-info?designation=${user?.roles}`) {
+              console.log(data.total)
+              return { ...item, total:  data.total };
+            }
+            
+            if (item.api === `/getOutdatedEquipment?designation=${user?.roles}`) {
+              return { ...item, total: (Array.isArray(data) && data.length > 0) ? data[0].total || 0 : 0 };
             }
 
-            return { ...item, total: data.total || 0 }; // Default case
+            if (item.api === `/getCountStatus?designation=${user?.roles}`) {
+              const defaultData = { serviceable: 0, unserviceable: 0 };
+              const result = data?.length > 0 ? data[0] : defaultData;
+            
+              if (item.title.includes("Serviceable")) {
+                return { ...item, total: result.serviceable };
+              } else if (item.title.includes("Unserviceable")) {
+                return { ...item, total: 0 };
+              }
+            }
+            
+
+            return { ...item, total: data.total || 0 };
           })
         );
         setStats(updatedStats);
@@ -97,24 +113,20 @@ const EquipmentStats = ({ color }) => {
             </View>
             <View style={styles.textContainer}>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.total}>Total: {item.total}</Text>
+              <Text style={styles.total}>{item.total}</Text>
             </View>
-           
           </View>
         ))
       )}
-       <TouchableOpacity
-            onPress={() => {
-                router.push("/(tabs)/scanner");
-              
-            }}
-            style={[
-              styles.button,
-            ]}
-            className="bg-blue-500"
-          >
-            <Text style={styles.buttonText}>Scan QR Code</Text>
-          </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => {
+          router.push("/(tabs)/scanner");
+        }}
+        style={[styles.button]}
+        
+      >
+        <Text style={styles.buttonText}>Scan QR Code</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -156,14 +168,15 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsLight",
   },
   total: {
-    fontSize: 16,
+    fontSize: 36,
     color: "#ffffff",
     fontFamily: "PoppinsLight",
   },
   button: {
     width: "100%",
     height: 50,
-    backgroundColor: "#263238",
+    top:20,
+    backgroundColor: "#2e4156",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,

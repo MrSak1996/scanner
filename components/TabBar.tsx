@@ -42,18 +42,7 @@ const TabBar = ({ state, descriptors, navigation }) => {
             target: route.key,
           });
         };
-        // return (
-        //   <TabBarButton
-        //     key={route.name}
-        //     style={styles.tabbarItem}
-        //     onPress={onPress}
-        //     onLongPress={onLongPress}
-        //     isFocused={isFocused}
-        //     routeName={route.name}
-        //     color={isFocused ? "#6366f1" : "#004D40"}
-        //     label={label}
-        //   />
-        // );
+        
 
 
 

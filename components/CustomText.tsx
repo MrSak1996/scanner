@@ -18,10 +18,10 @@ const CustomText = ({
           ? "numeric"
           : "default"
       }
-      style={[
-        styles.input,
-        focusedInput === label ? styles.inputFocused : null,
-      ]}
+        style={[
+          styles.input,
+          focusedInput === label ? styles.inputFocused : null,
+        ]}
       value={value}
       onFocus={() => setFocusedInput(label)}
       onBlur={() => setFocusedInput(null)}

@@ -28,7 +28,7 @@ const LoginScreen = () => {
   
     setIsLoading(true);
     try {
-      const url = "https://b9a0-180-232-3-93.ngrok-free.app/api/login";
+      const url = "https://d98c-180-232-3-94.ngrok-free.app/api/login";
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -43,9 +43,8 @@ const LoginScreen = () => {
   
       if (response.ok && data.api_token) {
         Alert.alert("Success", "Login successful!");
-        
+        // console.log(data);
         setUser(data); // Store user data globally
-        
         router.push("/(tabs)/scanner");
       } else {
         Alert.alert("Error", data.message || "Invalid credentials.");

@@ -35,6 +35,7 @@ import { useAuth } from "./static_data/AuthContext";
 
 const Create = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
+  const { designation } = useLocalSearchParams<{ designation: string }>();
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [formData, setFormData] = useState({
@@ -123,7 +124,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/fetchNatureWork"
+        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchNatureWork"
       );
       setWorkData(response.data);
     } catch (error) {
@@ -141,7 +142,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/fetchEquipment"
+        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchEquipment"
       );
       setEquipmentData(response.data);
     } catch (error) {
@@ -159,7 +160,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/fetchDivisionData",
+        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchDivisionData",
         {
           withCredentials: true,
         }
@@ -176,7 +177,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/fetchEmploymentType"
+        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchEmploymentType"
       );
       setEmploymentData(response.data);
     } catch (error) {
@@ -190,7 +191,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/fetchRangeEntry"
+        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchRangeEntry"
       );
       setRangeData(response.data);
     } catch (error) {
@@ -209,7 +210,7 @@ const Create = () => {
       setIsLoading(true);
       setError("");
 
-      const url = `https://b9a0-180-232-3-93.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
+      const url = `https://d98c-180-232-3-94.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -225,7 +226,6 @@ const Create = () => {
       }
 
       const result = await response.json();
-      console.log(result)
 
       if (Array.isArray(result) && result.length > 0) {
         const [item] = result;
@@ -255,7 +255,7 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
-      const url = "https://b9a0-180-232-3-93.ngrok-free.app/api/updateUser";
+      const url = "https://d98c-180-232-3-94.ngrok-free.app/api/updateUser";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -281,7 +281,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const url =
-        "https://b9a0-180-232-3-93.ngrok-free.app/api/updatePeripherals";
+        "https://d98c-180-232-3-94.ngrok-free.app/api/updatePeripherals";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -371,7 +371,7 @@ const Create = () => {
           {isLoading ? (
             <ActivityIndicator size="large" color="#0000ff" />
           ) : val === "Dashboard" ? (
-            <EquipmentStats color="#00695C" />
+            <EquipmentStats color="#375534" />
           ) : val === "General Information" ? (
             <ScrollView
               contentContainerStyle={styles.content}
@@ -798,7 +798,7 @@ const Create = () => {
                 setFocusedInput={setFocusedInput}
               />
               <View style={styles.buttonWrapper}>
-                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                {user?.roles == 13 ? (
                   <Text style={styles.buttonText} onPress={updatePeripherals}>
                     <AntDesign
                       style={styles.icon}

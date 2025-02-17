@@ -1,13 +1,13 @@
 export const yearData = [
-  { label: "2017", id: 1 },
-  { label: "2018", id: 2 },
-  { label: "2019", id: 3 },
-  { label: "2020", id: 4 },
-  { label: "2021", id: 5 },
-  { label: "2022", id: 6 },
-  { label: "2023", id: 7 },
-  { label: "2024", id: 8 },
-  { label: "2025", id: 9 },
+  { label: "2017", id: 2017 },
+  { label: "2018", id: 2018 },
+  { label: "2019", id: 2019 },
+  { label: "2020", id: 2020 },
+  { label: "2021", id: 2021 },
+  { label: "2022", id: 2022 },
+  { label: "2023", id: 2023 },
+  { label: "2024", id: 2024 },
+  { label: "2025", id: 2025 },
 ];
 
 export const tabs = [
