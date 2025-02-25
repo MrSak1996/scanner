@@ -3,6 +3,7 @@ import {
   SafeAreaView,
   View,
   Text,
+  Image,
   TextInput,
   StyleSheet,
   ScrollView,
@@ -124,7 +125,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchNatureWork"
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNatureWork"
       );
       setWorkData(response.data);
     } catch (error) {
@@ -142,7 +143,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchEquipment"
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchEquipment"
       );
       setEquipmentData(response.data);
     } catch (error) {
@@ -160,7 +161,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchDivisionData",
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchDivisionData",
         {
           withCredentials: true,
         }
@@ -177,7 +178,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchEmploymentType"
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchEmploymentType"
       );
       setEmploymentData(response.data);
     } catch (error) {
@@ -191,7 +192,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://d98c-180-232-3-94.ngrok-free.app/api/fetchRangeEntry"
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchRangeEntry"
       );
       setRangeData(response.data);
     } catch (error) {
@@ -210,7 +211,7 @@ const Create = () => {
       setIsLoading(true);
       setError("");
 
-      const url = `https://d98c-180-232-3-94.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
+      const url = `https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -255,7 +256,7 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
-      const url = "https://d98c-180-232-3-94.ngrok-free.app/api/updateUser";
+      const url = "https://7ae2-180-232-3-92.ngrok-free.app/api/updateUser";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -281,7 +282,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const url =
-        "https://d98c-180-232-3-94.ngrok-free.app/api/updatePeripherals";
+        "https://7ae2-180-232-3-92.ngrok-free.app/api/updatePeripherals";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -371,7 +372,8 @@ const Create = () => {
           {isLoading ? (
             <ActivityIndicator size="large" color="#0000ff" />
           ) : val === "Dashboard" ? (
-            <EquipmentStats color="#375534" />
+          
+            <EquipmentStats color="#08254b" />
           ) : val === "General Information" ? (
             <ScrollView
               contentContainerStyle={styles.content}

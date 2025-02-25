@@ -14,6 +14,7 @@ import { Camera, useCameraPermissions, CameraView } from "expo-camera";
 import { Stack, useRouter } from "expo-router";
 import { Overlay } from "../Overlay"; // Ensure this file exists
 import axios from "axios";
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for the back icon
 
 export default function Home() {
   const qrLock = useRef(false);
@@ -51,7 +52,7 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `https://d98c-180-232-3-94.ngrok-free.app/api/fetchNativeAPI`,
+        `https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNativeAPI`,
         { params: { id: data } }
       );
 
@@ -77,7 +78,6 @@ export default function Home() {
     }
   };
 
-  // 🚨 Show error message if permission not granted
   if (hasPermission === null) {
     return (
       <View style={styles.centered}>
@@ -101,17 +101,25 @@ export default function Home() {
       <Stack.Screen
         options={{
           title: "QR Code",
-          headerShown: true,
+          headerShown: false, // Hide default header
         }}
       />
       {Platform.OS === "android" ? <StatusBar hidden /> : null}
+
+      {/* Custom Header with Back Button */}
+      <View style={styles.header}>
+      <TouchableOpacity onPress={() => router.push("../create")} style={styles.backButton}>
+      <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>QR Code Scanner</Text>
+      </View>
 
       <CameraView
         style={StyleSheet.absoluteFillObject}
         facing="back"
         onBarcodeScanned={handleBarcodeScanned}
       />
-      <Overlay/>
+      <Overlay />
     </SafeAreaView>
   );
 }
@@ -119,6 +127,27 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    position: "absolute",
+    top: 40,
+    left: 10,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    zIndex: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 10,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -142,3 +171,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+

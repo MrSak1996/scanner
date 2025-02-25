@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Image
+  Image,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { useAuth } from "./static_data/AuthContext"; // Import useAuth
@@ -25,10 +25,10 @@ const LoginScreen = () => {
       Alert.alert("Error", "Please enter both email and password.");
       return;
     }
-  
+
     setIsLoading(true);
     try {
-      const url = "https://d98c-180-232-3-94.ngrok-free.app/api/login";
+      const url = "https://7ae2-180-232-3-92.ngrok-free.app/api/login";
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -37,15 +37,15 @@ const LoginScreen = () => {
         },
         body: JSON.stringify({ username, password }),
       });
-  
+
       const data = await response.json();
       setIsLoading(false);
-  
+
       if (response.ok && data.api_token) {
         Alert.alert("Success", "Login successful!");
         // console.log(data);
         setUser(data); // Store user data globally
-        router.push("/(tabs)/scanner");
+        router.push("/create");
       } else {
         Alert.alert("Error", data.message || "Invalid credentials.");
       }
@@ -60,16 +60,18 @@ const LoginScreen = () => {
       <Stack.Screen options={{ title: "Login", headerShown: false }} />
       <Image
         style={styles.img}
-      source={require("../../assets/images/denr_logo.png")}
+        source={require("../../assets/images/denr_logo.png")}
       />
-      <Text style={styles.img_title}>Department of Environment and Natural Resources</Text>
+      <Text style={styles.img_title}>
+        Department of Environment and Natural Resources
+      </Text>
       <Text style={styles.img_title}>Region IV-A (CALABARZON)</Text>
       <Image
         style={styles.backgroundImage}
         source={require("../../assets/images/background.jpg")}
       />
       <View style={styles.content}>
-        <Text style={styles.title}>ICT Inventory System</Text>
+        <Text style={styles.title}>REGIONAL ICT Inventory System</Text>
         <TextInput
           style={styles.input}
           placeholder="Username"
@@ -86,17 +88,22 @@ const LoginScreen = () => {
           onChangeText={setPassword}
           secureTextEntry
         />
-        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={isLoading}>
+        <TouchableOpacity
+          onPress={handleLogin}
+          style={styles.button}
+          disabled={isLoading}
+        >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>Login</Text>
           )}
         </TouchableOpacity>
-
-        
+        <Text style={styles.footerText}>All Rights Reserved</Text>
+        <Text style={styles.versionText}>
+          Planning and Management Division - RICT v1.0 2025
+        </Text>
       </View>
-  
     </SafeAreaView>
   );
 };
@@ -111,21 +118,23 @@ const styles = StyleSheet.create({
   content: {
     width: "80%",
     alignItems: "center",
-    top:-50
+    top: -50,
   },
-  img_title:{
-    fontFamily:'Times New Roman',
-    fontSize:16,
-    bottom:300,
-    right:-50,
-    zIndex:40
+  img_title: {
+    fontFamily: "PoppinsRegular",
+    fontSize: 16,
+    top: -210,
+    bottom: 300,
+    left: 0,
+    zIndex: 40,
   },
-  img:{
-    width:100,
-    height:100,
-    bottom:220,
-    right:160,
-    zIndex:40
+  img: {
+    width: 80,
+    height: 80,
+    top: -210,
+    bottom: 220,
+    right: 0,
+    zIndex: 40,
   },
   backgroundImage: {
     position: "absolute",
@@ -137,7 +146,8 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     marginBottom: 20,
-    fontFamily:"PoppinsRegular"
+    fontFamily: "PoppinsRegular",
+    color: "#08254b",
   },
   input: {
     width: "100%",
@@ -147,7 +157,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 15,
-    fontFamily:"PoppinsRegular"
+    fontFamily: "PoppinsRegular",
   },
   button: {
     width: "100%",
@@ -162,6 +172,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  footerText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#555",
+    top:270,
+    fontFamily: "PoppinsRegular",
+  },
+  versionText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#555",
+    top:270,
+    fontFamily: "PoppinsRegular",
+  },
+  
 });
 
 export default LoginScreen;
