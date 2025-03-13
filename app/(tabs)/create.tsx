@@ -125,7 +125,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNatureWork"
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNatureWork"
       );
       setWorkData(response.data);
     } catch (error) {
@@ -143,7 +143,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchEquipment"
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchEquipment"
       );
       setEquipmentData(response.data);
     } catch (error) {
@@ -161,7 +161,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchDivisionData",
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchDivisionData",
         {
           withCredentials: true,
         }
@@ -178,7 +178,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchEmploymentType"
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchEmploymentType"
       );
       setEmploymentData(response.data);
     } catch (error) {
@@ -192,7 +192,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/fetchRangeEntry"
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchRangeEntry"
       );
       setRangeData(response.data);
     } catch (error) {
@@ -211,7 +211,7 @@ const Create = () => {
       setIsLoading(true);
       setError("");
 
-      const url = `https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
+      const url = `https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -256,7 +256,7 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
-      const url = "https://7ae2-180-232-3-92.ngrok-free.app/api/updateUser";
+      const url = "https://6fc8-180-232-3-94.ngrok-free.app/api/updateUser";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -282,7 +282,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const url =
-        "https://7ae2-180-232-3-92.ngrok-free.app/api/updatePeripherals";
+        "https://6fc8-180-232-3-94.ngrok-free.app/api/updatePeripherals";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -308,7 +308,7 @@ const Create = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const [val, setTabValue] = useState(tabs[0].name);
+  const [val, setTabValue] = useState(tabs[1].name);
 
   return (
     <>
@@ -479,6 +479,13 @@ const Create = () => {
                 }
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
+              />
+
+              <CustomDropdown
+                label="Status:"
+                data={equipmentList}
+                value={formData.equipment_type}
+                onChange={(value) => handleInputChange("equipment_type", value)}
               />
 
               <View style={styles.buttonWrapper}>
@@ -845,7 +852,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   tabs: {
-    top: 25,
     flexDirection: "row",
   },
   tab: {

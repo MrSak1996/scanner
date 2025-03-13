@@ -52,7 +52,7 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `https://7ae2-180-232-3-92.ngrok-free.app/api/fetchNativeAPI`,
+        `https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNativeAPI`,
         { params: { id: data } }
       );
 

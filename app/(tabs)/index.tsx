@@ -28,7 +28,7 @@ const LoginScreen = () => {
 
     setIsLoading(true);
     try {
-      const url = "https://7ae2-180-232-3-92.ngrok-free.app/api/login";
+      const url = "https://6fc8-180-232-3-94.ngrok-free.app/api/login";
       const response = await fetch(url, {
         method: "POST",
         headers: {

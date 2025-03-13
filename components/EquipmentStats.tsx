@@ -13,12 +13,11 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 import { Stack, useRouter } from "expo-router";
 import { useAuth } from "../app/(tabs)/static_data/AuthContext";
 
-const API_BASE_URL = "https://7ae2-180-232-3-92.ngrok-free.app/api";
+const API_BASE_URL = "https://6fc8-180-232-3-94.ngrok-free.app/api";
 
 const EquipmentStats = ({ color }) => {
   const router = useRouter();
   const { user } = useAuth();
-
   const [stats, setStats] = useState([
     {
       title: "Total ICT Equipment",
@@ -33,6 +32,7 @@ const EquipmentStats = ({ color }) => {
       total: 0,
       icon: "tool",
       api: `/getCountStatus?designation=${user?.roles}`,
+      
     },
     {
       title: "Total Unserviceable Equipment",
@@ -47,6 +47,13 @@ const EquipmentStats = ({ color }) => {
       total: 0,
       icon: "hourglass",
       api: `/getOutdatedEquipment?designation=${user?.roles}`,
+    },
+    {
+      title: "Total Incomplete Data",
+      opacity: 0.6,
+      total: 0,
+      icon: "invalid",
+      api: `/vw-invalid-data?designation=${user?.roles}`
     },
   ]);
 
@@ -67,9 +74,12 @@ const EquipmentStats = ({ color }) => {
               return { ...item, total: data.length > 0 ? data[0].total || 0 : 0 };
             }
             if (item.api.includes("getCountStatus")) {
-              return { ...item, total: item.title.includes("Serviceable") ? data[0]?.serviceable || 0 : 0 };
+              return { ...item, total: item.title.includes("Total Serviceable Equipment") ? data[0]?.serviceable || 0 : data[0]?.unserviceable };
             }
-            return { ...item, total: data.total || 0 };
+            if (item.api.includes("Incomplete")) {
+              return { ...item, total: data.length > 0 ? data[0].total || 0 : 0 };
+            }
+            return { ...item, total: data.count || 0 };
           })
         );
         setStats(updatedStats);
@@ -97,7 +107,9 @@ const EquipmentStats = ({ color }) => {
           <Text style={styles.username}>{user?.username}</Text>
         </View>
       </View>
-
+      <TouchableOpacity onPress={() => router.push("/(tabs)/scanner")} style={styles.button}>
+        <Text style={styles.buttonText}>Scan QR Code</Text>
+      </TouchableOpacity>
       {loading ? (
         <ActivityIndicator size="large" color="#08254b" style={{ marginTop: 20 }} />
       ) : (
@@ -116,9 +128,7 @@ const EquipmentStats = ({ color }) => {
         </Animated.View>
       )}
 
-      <TouchableOpacity onPress={() => router.push("/(tabs)/scanner")} style={styles.button}>
-        <Text style={styles.buttonText}>Scan QR Code</Text>
-      </TouchableOpacity>
+   
     </ScrollView>
   );
 };
@@ -134,7 +144,8 @@ const hexToRgba = (hex, opacity) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
+    height:150,
+    marginTop: 30,
     paddingHorizontal: 20,
     paddingVertical: 10,
     alignItems: "center",
@@ -168,7 +179,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 15,
     padding: 20,
-    marginBottom: 15,
+    marginBottom: 5,
     width: "100%",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -208,7 +219,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    marginTop: 20,
+    marginTop: 0,
+    marginBottom:5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
