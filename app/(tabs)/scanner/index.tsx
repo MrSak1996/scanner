@@ -52,11 +52,12 @@ export default function Home() {
 
     try {
       const response = await axios.get(
-        `https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNativeAPI`,
+        `https://riis.denrcalabarzon.com/api/fetchNativeAPI`,
         { params: { id: data } }
       );
 
-      if (response.data && response.data.length > 0 && response.data[0].control_id) {
+
+      // if (response.data && response.data.length > 0 && response.data[0].control_id) {
         setTimeout(() => {
           router.push({
             pathname: "../create",
@@ -67,12 +68,12 @@ export default function Home() {
           });
           qrLock.current = false; // Unlock after navigation
         }, 500);
-      } else {
-        alert("Invalid QR Code or No Data Found");
-        qrLock.current = false;
-      }
+      // } else {
+      //   console.log("error"+data);
+      //   qrLock.current = false;
+      // }
     } catch (error) {
-      alert("Failed to fetch data. Please try again.");
+      // alert("Failed to fetch data. Please try again.");
       console.error("API Error:", error);
       qrLock.current = false;
     }

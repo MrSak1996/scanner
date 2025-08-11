@@ -23,6 +23,7 @@ import ColorList from "@/components/EquipmentStats";
 
 import {
   yearData,
+  statusOptions,
   tabs,
   network_type,
   gpu_type,
@@ -36,11 +37,13 @@ import { useAuth } from "./static_data/AuthContext";
 
 const Create = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
+  const { id } = useLocalSearchParams<{ qrCode: string }>();
   const { designation } = useLocalSearchParams<{ designation: string }>();
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [formData, setFormData] = useState({
     qrCode: qrCode || "",
+    equipment_status: "",
     control_id: "",
     division: "",
     user: "",
@@ -113,7 +116,9 @@ const Create = () => {
     qrCode && searchUser(qrCode);
   }, [qrCode]);
 
+
   useEffect(() => {
+    console.log(id.equipment_title)
     fetchWorkData();
     fetchEquipmentData();
     fetchDivisionData();
@@ -125,7 +130,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNatureWork"
+        "https://riis.denrcalabarzon.com/api/fetchNatureWork"
       );
       setWorkData(response.data);
     } catch (error) {
@@ -143,7 +148,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchEquipment"
+        "https://riis.denrcalabarzon.com/api/fetchEquipment"
       );
       setEquipmentData(response.data);
     } catch (error) {
@@ -161,7 +166,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchDivisionData",
+        "https://riis.denrcalabarzon.com/api/fetchDivisionData",
         {
           withCredentials: true,
         }
@@ -178,7 +183,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchEmploymentType"
+        "https://riis.denrcalabarzon.com/api/fetchEmploymentType"
       );
       setEmploymentData(response.data);
     } catch (error) {
@@ -192,7 +197,7 @@ const Create = () => {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/fetchRangeEntry"
+        "https://riis.denrcalabarzon.com/api/fetchRangeEntry"
       );
       setRangeData(response.data);
     } catch (error) {
@@ -211,7 +216,7 @@ const Create = () => {
       setIsLoading(true);
       setError("");
 
-      const url = `https://6fc8-180-232-3-94.ngrok-free.app/api/fetchNativeAPI?id=${id}`;
+      const url = `https://riis.denrcalabarzon.com/api/fetchNativeAPI?id=${id}`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -256,7 +261,7 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
-      const url = "https://6fc8-180-232-3-94.ngrok-free.app/api/updateUser";
+      const url = "https://riis.denrcalabarzon.com/api/updateUser";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -281,8 +286,7 @@ const Create = () => {
   const updatePeripherals = async () => {
     try {
       setIsLoading(true);
-      const url =
-        "https://6fc8-180-232-3-94.ngrok-free.app/api/updatePeripherals";
+      const url = "https://riis.denrcalabarzon.com/api/updatePeripherals";
       const response = await axios.post(url, formData);
 
       if (response.status === 200) {
@@ -309,6 +313,39 @@ const Create = () => {
   };
 
   const [val, setTabValue] = useState(tabs[1].name);
+  const allowedUsernames = [
+    "denr4@_rict",
+    "penro_laguna",
+    "penro_batangas",
+    "regional_office",
+    "penro_quezon",
+    "cenro_lipa",
+    "penro_cavite",
+    "admin_pmd",
+    "penro_rizal",
+    "cenro_stacruz",
+    "cenro_calaca",
+    "cenro_calauag",
+    "cenro_catanuan",
+    "cenro_tayabas",
+    "cenro_real",
+    "denr4@_loel",
+    "denr4@_ken",
+  ];
+
+  <View style={styles.buttonWrapper}>
+    {allowedUsernames.includes(user?.username) && (
+      <Text style={styles.buttonText} onPress={updateUser}>
+        <AntDesign
+          style={styles.icon}
+          color={isFocus ? "blue" : "black"}
+          name="save"
+          size={25}
+        />
+        {isLoading ? "Updating..." : user?.username}
+      </Text>
+    )}
+  </View>;
 
   return (
     <>
@@ -316,8 +353,8 @@ const Create = () => {
         style={styles.container}
         behavior={Platform.OS === "android" ? "padding" : "height"}
       >
-        <Stack.Screen
-          name="Information"
+        {/* <Stack.Screen
+          name="About"
           options={{
             title: "DENR IV-A (CALABARZON)",
             headerShown: false,
@@ -325,7 +362,7 @@ const Create = () => {
             headerTintColor: "#fff",
             headerTitleStyle: { fontWeight: "bold" },
           }}
-        />
+        /> */}
 
         <View style={styles.placeholder}>
           <View style={styles.tabs}>
@@ -372,9 +409,8 @@ const Create = () => {
           {isLoading ? (
             <ActivityIndicator size="large" color="#0000ff" />
           ) : val === "Dashboard" ? (
-          
             <EquipmentStats color="#08254b" />
-          ) : val === "General Information" ? (
+          ) : val === "Information" ? (
             <ScrollView
               contentContainerStyle={styles.content}
               keyboardShouldPersistTaps="handled"
@@ -483,13 +519,15 @@ const Create = () => {
 
               <CustomDropdown
                 label="Status:"
-                data={equipmentList}
-                value={formData.equipment_type}
-                onChange={(value) => handleInputChange("equipment_type", value)}
+                data={statusOptions}
+                value={formData.equipment_status}
+                onChange={(value) =>
+                  handleInputChange("equipment_status", value)
+                }
               />
 
               <View style={styles.buttonWrapper}>
-                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                {allowedUsernames.includes(user?.username) && (
                   <Text style={styles.buttonText} onPress={updateUser}>
                     <AntDesign
                       style={styles.icon}
@@ -499,7 +537,7 @@ const Create = () => {
                     />
                     {isLoading ? "Updating..." : "Update"}
                   </Text>
-                ) : null}
+                )}
               </View>
             </ScrollView>
           ) : val === "Specification" ? (
@@ -603,8 +641,6 @@ const Create = () => {
                   </Text>
                 ) : null}
               </View>
-              
-             
             </ScrollView>
           ) : val === "Peripherals" ? (
             <ScrollView
@@ -819,7 +855,6 @@ const Create = () => {
                   </Text>
                 ) : null}
               </View>
-              
             </ScrollView>
           ) : null}
         </View>
@@ -929,11 +964,12 @@ const styles = StyleSheet.create({
   },
   selectedTextStyle: {
     fontSize: 14,
-    fontFamily: "PoppinsRegular",
+    fontFamily: "PoppinsBold",
   },
   content: {
-    marginTop: 40,
-    paddingBottom: 20,
+    marginTop: 2,
+    paddingBottom: 0,
+    padding: 20,
   },
   icon: {
     marginRight: 5,

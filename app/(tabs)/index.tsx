@@ -28,7 +28,9 @@ const LoginScreen = () => {
 
     setIsLoading(true);
     try {
-      const url = "https://6fc8-180-232-3-94.ngrok-free.app/api/login";
+      router.push("/create");
+
+      const url = "https://riis.denrcalabarzon.com/api/login";
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -45,7 +47,6 @@ const LoginScreen = () => {
         Alert.alert("Success", "Login successful!");
         // console.log(data);
         setUser(data); // Store user data globally
-        router.push("/create");
       } else {
         Alert.alert("Error", data.message || "Invalid credentials.");
       }
@@ -151,13 +152,14 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
-    height: 50,
+    height: 60,
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 15,
     fontFamily: "PoppinsRegular",
+    fontWeight: "bold"
   },
   button: {
     width: "100%",

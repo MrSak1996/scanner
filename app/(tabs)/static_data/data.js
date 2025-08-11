@@ -9,10 +9,14 @@ export const yearData = [
   { label: "2024", id: 2024 },
   { label: "2025", id: 2025 },
 ];
-
+export const statusOptions = [
+  { label: "Serviceable", id: 1 },
+  { label: "Unserviceable", id: 2 },
+  { label: "Returned", id: 3 },
+];
 export const tabs = [
   { name: "Dashboard", icon: "home" },
-  { name: "General Information", icon: "info" },
+  { name: "Information", icon: "info" },
   { name: "Specification", icon: "grid" },
   { name: "Peripherals", icon: "monitor" },
 ];
