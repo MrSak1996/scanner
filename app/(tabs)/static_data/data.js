@@ -9,6 +9,22 @@ export const yearData = [
   { label: "2024", id: 2024 },
   { label: "2025", id: 2025 },
 ];
+
+export const hdd_capacity = [
+    { label: "100 GB", id: 6 },
+  { label: "128 GB", id: 7 },
+  { label: "250 GB", id: 8 },
+  { label: "400 GB", id: 9 }, // fixed from 4 GB typo
+  { label: "500 GB", id: 10 },
+  { label: "1 TB", id: 1 },
+  { label: "2 TB", id: 2 },
+  { label: "3 TB", id: 3 },
+  { label: "4 TB", id: 4 },
+  { label: "5 TB", id: 5 },
+
+];
+
+
 export const statusOptions = [
   { label: "Serviceable", id: 1 },
   { label: "Unserviceable", id: 2 },
@@ -16,6 +32,12 @@ export const statusOptions = [
 ];
 export const tabs = [
   { name: "Dashboard", icon: "home" },
+  { name: "Information", icon: "info" },
+  { name: "Specification", icon: "grid" },
+  { name: "Peripherals", icon: "monitor" },
+];
+
+export const search_tabs = [
   { name: "Information", icon: "info" },
   { name: "Specification", icon: "grid" },
   { name: "Peripherals", icon: "monitor" },
@@ -38,20 +60,21 @@ export const wireless_type = [
 ];
 
 export const ram_opts = [
-  { label: "Static RAM", id: 1 },
-  { label: "Dynamic RAM", id: 2 },
-  { label: "Synchronous Dynamic RAM (SDRAM)", id: 3 },
-  { label: "Single Data Rate Synchronous Dynamic RAM", id: 4 },
+  // { label: "Static RAM", id: 1 },
+  // { label: "Dynamic RAM", id: 2 },
+  // { label: "Synchronous Dynamic RAM (SDRAM)", id: 3 },
+  // { label: "Single Data Rate Synchronous Dynamic RAM", id: 4 },
   { label: "DDR2", id: 5 },
   { label: "DDR3", id: 6 },
   { label: "DDR4", id: 7 },
-  { label: "GDDR", id: 8 },
-  { label: "SDRAM", id: 9 },
-  { label: "GDDR2", id: 10 },
-  { label: "GDDR3", id: 11 },
-  { label: "GDDR4", id: 12 },
-  { label: "GDDR5", id: 13 },
-  { label: "Flash Memory", id: 14 },
+  { label: "DDR4", id: 15 },
+  // { label: "GDDR", id: 8 },
+  // { label: "SDRAM", id: 9 },
+  // { label: "GDDR2", id: 10 },
+  // { label: "GDDR3", id: 11 },
+  // { label: "GDDR4", id: 12 },
+  // { label: "GDDR5", id: 13 },
+  // { label: "Flash Memory", id: 14 },
 ];
 
 export const users_opts = [

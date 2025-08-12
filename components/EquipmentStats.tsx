@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import {
   View,
   Text,
@@ -18,11 +19,12 @@ import axios from "axios";
 
 const API_BASE_URL = "https://riis.denrcalabarzon.com/api";
 
+// Updated EquipmentStats.js
+
 const EquipmentStats = ({ color }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -30,40 +32,44 @@ const EquipmentStats = ({ color }) => {
   const [loading, setLoading] = useState(true);
   const fadeAnim = useState(new Animated.Value(0))[0];
 
+  // Pre-assign distinct colors per stat
+  const cardColors = [
+    "#3B82F6", // Blue
+    "#10B981", // Green
+    "#EF4444", // Red
+    "#F59E0B", // Amber
+    "#8B5CF6", // Purple
+  ];
+
   const [stats, setStats] = useState([
     {
       title: "Total ICT Equipment",
-      opacity: 1.5,
       total: 0,
       icon: "laptop",
       api: `/vw-gen-info?designation=${user?.roles}`,
     },
     {
       title: "Total Serviceable Equipment",
-      opacity: 0.8,
       total: 0,
       icon: "tool",
       api: `/getCountStatus?designation=${user?.roles}`,
     },
     {
       title: "Total Unserviceable Equipment",
-      opacity: 0.7,
       total: 0,
       icon: "closecircleo",
       api: `/getCountStatus?designation=${user?.roles}`,
     },
     {
       title: "Total Outdated Equipment",
-      opacity: 0.6,
       total: 0,
       icon: "hourglass",
       api: `/getOutdatedEquipment?designation=${user?.roles}`,
     },
     {
       title: "Total Incomplete Data",
-      opacity: 0.6,
       total: 0,
-      icon: "hourglass",
+      icon: "exclamationcircleo",
       api: `/vw-invalid-data?designation=${user?.roles}`,
     },
   ]);
@@ -73,33 +79,28 @@ const EquipmentStats = ({ color }) => {
     try {
       setSearching(true);
       const response = await axios.get(
-        `${API_BASE_URL}/vw-gen-info?designation=${
-          user?.roles
-        }&search=${encodeURIComponent(searchQuery)}`
+        `${API_BASE_URL}/vw-gen-info?designation=${user?.roles}&search=${encodeURIComponent(searchQuery)}`
       );
-      const data = response.data.data;
-      setSearchResults(data);
-
-      console.log(data.equipment_title);
-      setModalVisible(true); // show modal after results
+      setSearchResults(response.data.data);
+      setModalVisible(true);
     } catch (error) {
       console.error("Search error:", error);
     } finally {
       setSearching(false);
     }
   };
-
-  const handleEdit = (item) => {
-    try {
+    const handleEdit = (item) => {
+    setModalVisible(false); // hide modal
+    setTimeout(() => {
+      // wait for modal animation
       router.push({
-        pathname: "../(tabs)/create",
-        params: { id: item }, // example param
+        pathname: "/(tabs)/search",
+        
+        params: { id: item.qr_code },
       });
-      setModalVisible(false);
-    } catch (error) {
-      console.log("this"+error);
-    }
+    }, 300);
   };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,10 +114,7 @@ const EquipmentStats = ({ color }) => {
               return { ...item, total: data.total };
             }
             if (item.api.includes("getOutdatedEquipment")) {
-              return {
-                ...item,
-                total: data.length > 0 ? data[0].total || 0 : 0,
-              };
+              return { ...item, total: data[0]?.total || 0 };
             }
             if (item.api.includes("getCountStatus")) {
               return {
@@ -127,10 +125,7 @@ const EquipmentStats = ({ color }) => {
               };
             }
             if (item.api.includes("Incomplete")) {
-              return {
-                ...item,
-                total: data.length > 0 ? data[0].total || 0 : 0,
-              };
+              return { ...item, total: data[0]?.total || 0 };
             }
             return { ...item, total: data.count || 0 };
           })
@@ -152,7 +147,7 @@ const EquipmentStats = ({ color }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Modal
+       <Modal
         visible={modalVisible}
         transparent
         animationType="slide"
@@ -231,7 +226,7 @@ const EquipmentStats = ({ color }) => {
 
                     {/* Edit Button */}
                     <TouchableOpacity
-                      onPress={() => handleEdit(item)} // pass the item to edit
+                      onPress={() => handleEdit(item)} // use your actual function
                       style={{
                         backgroundColor: "#607D8B",
                         paddingVertical: 10,
@@ -275,7 +270,6 @@ const EquipmentStats = ({ color }) => {
           </View>
         </View>
       </Modal>
-
       <View style={styles.header}>
         <Image
           style={styles.img}
@@ -287,15 +281,16 @@ const EquipmentStats = ({ color }) => {
         </View>
       </View>
 
+      {/* Buttons */}
       <TouchableOpacity
         onPress={() => router.push("/(tabs)/scanner")}
-        style={styles.button}
+        style={styles.buttonPrimary}
       >
         <Text style={styles.buttonText}>Scan QR Code</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.button}
+        style={styles.buttonSecondary}
         onPress={() => setSearchVisible(!searchVisible)}
       >
         <Text style={styles.buttonText}>
@@ -314,7 +309,7 @@ const EquipmentStats = ({ color }) => {
             returnKeyType="search"
           />
           <TouchableOpacity
-            style={[styles.button, { marginTop: 10 }]}
+            style={[styles.buttonPrimary, { marginTop: 10 }]}
             onPress={handleSearch}
           >
             <Text style={styles.buttonText}>Search Now</Text>
@@ -322,24 +317,18 @@ const EquipmentStats = ({ color }) => {
         </View>
       )}
 
+      {/* Stats */}
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#08254b"
-          style={{ marginTop: 20 }}
-        />
+        <ActivityIndicator size="large" color="#08254b" style={{ marginTop: 20 }} />
       ) : (
-        <Animated.View style={{ opacity: fadeAnim }}>
+        <Animated.View style={{ opacity: fadeAnim, width: "100%" }}>
           {stats.map((item, index) => (
             <View
               key={index}
-              style={[
-                styles.card,
-                { backgroundColor: hexToRgba(color, item.opacity) },
-              ]}
+              style={[styles.card, { backgroundColor: cardColors[index % cardColors.length] }]}
             >
               <View style={styles.iconContainer}>
-                <AntDesign name={item.icon} size={35} color="#ffffff" />
+                <AntDesign name={item.icon} size={30} color="#fff" />
               </View>
               <View style={styles.textContainer}>
                 <Text style={styles.title}>{item.title}</Text>
@@ -353,14 +342,6 @@ const EquipmentStats = ({ color }) => {
   );
 };
 
-const hexToRgba = (hex, opacity) => {
-  const bigint = parseInt(hex.slice(1), 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-};
-
 const styles = StyleSheet.create({
   container: {
     paddingTop: 30,
@@ -372,6 +353,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+    width: "100%",
   },
   img: {
     width: 60,
@@ -381,13 +363,12 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   welcomeText: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#555",
-    fontWeight: "400",
     fontFamily: "PoppinsRegular",
   },
   username: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#333",
     fontFamily: "PoppinsBold",
@@ -397,19 +378,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 15,
     padding: 20,
-    marginBottom: 10,
+    marginBottom: 15,
     width: "100%",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
     elevation: 3,
   },
   iconContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#ffffff22",
+    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
@@ -418,19 +399,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
-    color: "#ffffff",
+    color: "#fff",
     marginBottom: 5,
-    fontFamily: "PoppinsLight",
   },
   total: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#ffffff",
-    fontFamily: "PoppinsLight",
+    color: "#fff",
   },
-  button: {
+  buttonPrimary: {
     width: "100%",
     height: 50,
     backgroundColor: "#0f766e",
@@ -438,15 +417,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
     marginVertical: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+  },
+  buttonSecondary: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#4B5563",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    marginVertical: 5,
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   input: {
@@ -459,5 +442,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
+
+const hexToRgba = (hex, opacity) => {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+
 
 export default EquipmentStats;

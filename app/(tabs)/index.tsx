@@ -16,8 +16,8 @@ import { useAuth } from "./static_data/AuthContext"; // Import useAuth
 const LoginScreen = () => {
   const router = useRouter();
   const { setUser } = useAuth(); // Get setUser from AuthContext
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("denr4@_rict");
+  const [password, setPassword] = useState("123456789");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {

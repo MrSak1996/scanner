@@ -14,7 +14,9 @@ const CustomText = ({
       keyboardType={
         label === "Acquisition Cost:"
           ? "numeric"
-          : label === "Number of HDD's"
+          : label === "Number of HDD's:"
+          ? "numeric"
+          : label === "Number of SDD's:"
           ? "numeric"
           : "default"
       }
@@ -23,6 +25,7 @@ const CustomText = ({
           focusedInput === label ? styles.inputFocused : null,
         ]}
       value={value}
+      
       onFocus={() => setFocusedInput(label)}
       onBlur={() => setFocusedInput(null)}
       onChangeText={(value) => onChangeText(value)}

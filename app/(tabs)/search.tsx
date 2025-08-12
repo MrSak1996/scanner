@@ -13,18 +13,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import CustomDropdown from "@/components/CustomDropdown";
 import CustomText from "@/components/CustomText";
 import ColorList from "@/components/EquipmentStats";
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for the back icon
 
 import {
   yearData,
   statusOptions,
   tabs,
+  search_tabs,
+  hdd_capacity,
   network_type,
   gpu_type,
   wireless_type,
@@ -34,9 +37,11 @@ import {
 import axios from "axios";
 import EquipmentStats from "@/components/EquipmentStats";
 import { useAuth } from "./static_data/AuthContext";
+const router = useRouter();
 
-const Create = () => {
+const Search = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
+  const { id } = useLocalSearchParams<{ qrCode: string }>();
   const { designation } = useLocalSearchParams<{ designation: string }>();
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
@@ -44,11 +49,11 @@ const Create = () => {
     qrCode: qrCode || "",
     equipment_status: "",
     control_id: "",
+    item_status: "",
     division: "",
     user: "",
     control_no: "",
     division_id: "",
-    item_status:"",
     division_title: "",
     acct_person: "",
     actual_user: "",
@@ -73,7 +78,9 @@ const Create = () => {
     ram_type: "",
     ram_capacity: "",
     no_of_hdd: "",
+    no_of_ssd: "",
     hdd_capacity: "",
+    ssd_capacity: "",
     wireless_type: "",
     os_installed: "",
     mon_brand_model1: "",
@@ -100,8 +107,8 @@ const Create = () => {
     monitor1Status: "",
     monitor2Status: "",
   });
-  const { user } = useAuth();
 
+  const { user } = useAuth();
   const [data, setData] = useState([]);
   const [workData, setWorkData] = useState([]);
   const [employmentData, setEmploymentData] = useState([]);
@@ -113,8 +120,8 @@ const Create = () => {
   const [focusedInput, setFocusedInput] = useState(null);
 
   useEffect(() => {
-    qrCode && searchUser(qrCode);
-  }, [qrCode]);
+    id && searchUser(id);
+  }, [id]);
 
   useEffect(() => {
     fetchWorkData();
@@ -230,18 +237,33 @@ const Create = () => {
       }
 
       const result = await response.json();
-
       if (Array.isArray(result) && result.length > 0) {
         const [item] = result;
-        setData(result);
 
+        // Find ID from hdd_capacity list
+        const matchedCapacity = hdd_capacity.find(
+          (cap) =>
+            cap.label.trim().toLowerCase() ===
+            item.hdd_capacity?.trim().toLowerCase()
+        );
+        const matchedSSDCapacity = hdd_capacity.find(
+          (cap) =>
+            cap.label.trim().toLowerCase() ===
+            item.ssd_capacity?.trim().toLowerCase()
+        );
+
+        setData(result);
         setFormData((prev) => ({
           ...prev,
           ...item,
-          hdd_capacity: item.hdd_capacity || "",
+          hdd_capacity: matchedCapacity ? matchedCapacity.id : "",
+          ssd_capacity: matchedSSDCapacity ? matchedSSDCapacity.id : "",
+          no_of_hdd: item.no_of_hdd || "",
+          no_of_ssd: item.no_of_ssd || "",
           wireless_type: item.wireless_type || "",
           year_acquired: Number(item.year_acquired),
           item_status: item.item_status,
+          ram_type: Number(item.ram_type),
         }));
       } else {
         setData([]);
@@ -259,29 +281,35 @@ const Create = () => {
   };
 
   const updateUser = async () => {
-    try {
-      setIsLoading(true);
-      const url = "https://riis.denrcalabarzon.com/api/updateUser";
-      const response = await axios.post(url, formData);
+  try {
+    setIsLoading(true);
+    const url = "https://riis.denrcalabarzon.com/api/updateUser";
+    const response = await axios.post(url, formData);
 
-      if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          response.data.message || "User updated successfully."
-        );
-      } else {
-        Alert.alert("Error", "Unexpected response from the server.");
-      }
-    } catch (error) {
+    if (response.status === 200) {
       Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
+        "Success",
+        response.data.message || "User updated successfully."
       );
-    } finally {
-      setIsLoading(false);
+    } else {
+      Alert.alert("Error", "Unexpected response from the server.");
     }
-  };
+  } catch (error) {
+    console.log("API Error Response:", error.response?.data);
+
+    // Extract message from API if available
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      "An error occurred while processing your request.";
+
+    Alert.alert("Error", errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const updatePeripherals = async () => {
     try {
@@ -312,7 +340,7 @@ const Create = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const [val, setTabValue] = useState(tabs[0].name);
+  const [val, setTabValue] = useState(search_tabs[0].name);
   const allowedUsernames = [
     "denr4@_rict",
     "penro_laguna",
@@ -365,8 +393,23 @@ const Create = () => {
         /> */}
 
         <View style={styles.placeholder}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.push("/(tabs)/create")}
+            >
+              <Ionicons name="arrow-back" size={24} color="#00695C" />
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.tabs}>
-            {tabs.map(({ name, icon }, index) => {
+            {search_tabs.map(({ name, icon }, index) => {
               const isActive = name === val;
               return (
                 <View
@@ -408,8 +451,6 @@ const Create = () => {
 
           {isLoading ? (
             <ActivityIndicator size="large" color="#0000ff" />
-          ) : val === "Dashboard" ? (
-            <EquipmentStats color="#08254b" />
           ) : val === "Information" ? (
             <ScrollView
               contentContainerStyle={styles.content}
@@ -417,7 +458,7 @@ const Create = () => {
             >
               <CustomText
                 label="QR Code:"
-                value={qrCode}
+                value={id}
                 onChangeText={(value) => handleInputChange("qrCode", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
@@ -521,9 +562,7 @@ const Create = () => {
                 label="Status:"
                 data={statusOptions}
                 value={formData.item_status}
-                onChange={(value) =>
-                  handleInputChange("item_status", value)
-                }
+                onChange={(value) => handleInputChange("item_status", value)}
               />
 
               <View style={styles.buttonWrapper}>
@@ -608,15 +647,25 @@ const Create = () => {
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
-
               <CustomText
-                label="HDD Capacity:"
-                value={formData.hdd_capacity}
-                onChangeText={(value) =>
-                  handleInputChange("hdd_capacity", value)
-                }
+                label="Number of SDD's:"
+                value={formData.no_of_ssd}
+                onChangeText={(value) => handleInputChange("no_of_ssd", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
+              />
+
+              <CustomDropdown
+                label="HDD Capacity:"
+                data={hdd_capacity}
+                value={formData.hdd_capacity}
+                onChange={(value) => handleInputChange("hdd_capacity", value)}
+              />
+              <CustomDropdown
+                label={"SSD Capacity:"}
+                data={hdd_capacity}
+                value={formData.ssd_capacity}
+                onChange={(value) => handleInputChange("ssd_capacity", value)}
               />
 
               <CustomText
@@ -629,7 +678,7 @@ const Create = () => {
                 setFocusedInput={setFocusedInput}
               />
               <View style={styles.buttonWrapper}>
-                {user?.email === "kimsacluti10101996@gmail.com" ? (
+                {allowedUsernames.includes(user?.username) && (
                   <Text style={styles.buttonText} onPress={updateUser}>
                     <AntDesign
                       style={styles.icon}
@@ -639,7 +688,7 @@ const Create = () => {
                     />
                     {isLoading ? "Updating..." : "Update"}
                   </Text>
-                ) : null}
+                )}
               </View>
             </ScrollView>
           ) : val === "Peripherals" ? (
@@ -936,6 +985,16 @@ const styles = StyleSheet.create({
     color: "#00695C",
     fontSize: 14,
   },
+  backButton: {
+    padding: 8,
+    borderRadius: 6,
+  },
+  backTitle: {
+    fontSize: 16,
+    fontFamily: "PoppinsSemiBold",
+    color: "#00695C",
+  },
+
   input: {
     height: 50,
     borderColor: "gray",
@@ -992,4 +1051,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Create;
+export default Search;
