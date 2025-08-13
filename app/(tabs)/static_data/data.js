@@ -11,7 +11,7 @@ export const yearData = [
 ];
 
 export const hdd_capacity = [
-    { label: "100 GB", id: 6 },
+  { label: "100 GB", id: 6 },
   { label: "128 GB", id: 7 },
   { label: "250 GB", id: 8 },
   { label: "400 GB", id: 9 }, // fixed from 4 GB typo

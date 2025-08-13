@@ -24,6 +24,7 @@ import ColorList from "@/components/EquipmentStats";
 import {
   yearData,
   statusOptions,
+  hdd_capacity,
   tabs,
   network_type,
   gpu_type,
@@ -48,7 +49,7 @@ const Create = () => {
     user: "",
     control_no: "",
     division_id: "",
-    item_status:"",
+    item_status: "",
     division_title: "",
     acct_person: "",
     actual_user: "",
@@ -73,7 +74,9 @@ const Create = () => {
     ram_type: "",
     ram_capacity: "",
     no_of_hdd: "",
+    no_of_ssd: "",
     hdd_capacity: "",
+    ssd_capacity: "",
     wireless_type: "",
     os_installed: "",
     mon_brand_model1: "",
@@ -233,15 +236,31 @@ const Create = () => {
 
       if (Array.isArray(result) && result.length > 0) {
         const [item] = result;
+
+        // Find ID from hdd_capacity list
+        const matchedCapacity = hdd_capacity.find(
+          (cap) =>
+            cap.label.trim().toLowerCase() ===
+            item.hdd_capacity?.trim().toLowerCase()
+        );
+        const matchedSSDCapacity = hdd_capacity.find(
+          (cap) =>
+            cap.label.trim().toLowerCase() ===
+            item.ssd_capacity?.trim().toLowerCase()
+        );
         setData(result);
 
         setFormData((prev) => ({
           ...prev,
           ...item,
-          hdd_capacity: item.hdd_capacity || "",
+          hdd_capacity: matchedCapacity ? matchedCapacity.id : "",
+          ssd_capacity: matchedSSDCapacity ? matchedSSDCapacity.id : "",
+          no_of_hdd: item.no_of_hdd || "",
+          no_of_ssd: item.no_of_ssd || "",
           wireless_type: item.wireless_type || "",
           year_acquired: Number(item.year_acquired),
           item_status: item.item_status,
+          ram_type: Number(item.ram_type),
         }));
       } else {
         setData([]);
@@ -261,8 +280,17 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
+         const payload = {
+              ...formData,
+              hdd_capacity:
+                hdd_capacity.find((item) => item.id === formData.hdd_capacity)
+                  ?.label || "",
+              ssd_capacity:
+                hdd_capacity.find((item) => item.id === formData.ssd_capacity)
+                  ?.label || "",
+            };
       const url = "https://riis.denrcalabarzon.com/api/updateUser";
-      const response = await axios.post(url, formData);
+      const response = await axios.post(url, payload);
 
       if (response.status === 200) {
         Alert.alert(
@@ -521,9 +549,7 @@ const Create = () => {
                 label="Status:"
                 data={statusOptions}
                 value={formData.item_status}
-                onChange={(value) =>
-                  handleInputChange("item_status", value)
-                }
+                onChange={(value) => handleInputChange("item_status", value)}
               />
 
               <View style={styles.buttonWrapper}>
@@ -610,15 +636,29 @@ const Create = () => {
               />
 
               <CustomText
+                label="Number of SDD's:"
+                value={formData.no_of_ssd}
+                onChangeText={(value) => handleInputChange("no_of_ssd", value)}
+                focusedInput={focusedInput}
+                setFocusedInput={setFocusedInput}
+              />
+
+              <CustomText
                 label="HDD Capacity:"
                 value={formData.hdd_capacity}
-                onChangeText={(value) =>
-                  handleInputChange("hdd_capacity", value)
+                onChangeText={(id) =>
+                  handleInputChange("hdd_capacity", id)
                 }
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
 
+              <CustomDropdown
+                label={"SSD Capacity:"}
+                data={hdd_capacity}
+                value={formData.ssd_capacity}
+                onChange={(id) => handleInputChange("ssd_capacity", id)}
+              />
               <CustomText
                 label="Operating System Installed:"
                 value={formData.os_installed}

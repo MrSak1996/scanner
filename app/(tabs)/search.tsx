@@ -12,6 +12,8 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
@@ -50,6 +52,9 @@ const Search = () => {
     equipment_status: "",
     control_id: "",
     item_status: "",
+    monitor1Status: "",
+    monitor2Status: "",
+    ups_status: "",
     division: "",
     user: "",
     control_no: "",
@@ -104,8 +109,6 @@ const Search = () => {
     ups_actual_user: "",
     ups_property_no: "",
     ups_sn: "",
-    monitor1Status: "",
-    monitor2Status: "",
   });
 
   const { user } = useAuth();
@@ -119,6 +122,16 @@ const Search = () => {
   const [error, setError] = useState("");
   const [focusedInput, setFocusedInput] = useState(null);
 
+  const [showMonitor1, setShowMonitor1] = useState(true);
+  const [showMonitor2, setShowMonitor2] = useState(false);
+  const [showUPS, setShowUPS] = useState(false);
+
+  const toggleSection = (section) => {
+    LayoutAnimation.easeInEaseOut();
+    if (section === "monitor1") setShowMonitor1(!showMonitor1);
+    if (section === "monitor2") setShowMonitor2(!showMonitor2);
+    if (section === "ups") setShowUPS(!showUPS);
+  };
   useEffect(() => {
     id && searchUser(id);
   }, [id]);
@@ -230,15 +243,10 @@ const Search = () => {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(
-          `Server returned an error: ${response.status} ${response.statusText}`
-        );
-      }
-
       const result = await response.json();
       if (Array.isArray(result) && result.length > 0) {
         const [item] = result;
+        // alert(item.ssd_capacity);
 
         // Find ID from hdd_capacity list
         const matchedCapacity = hdd_capacity.find(
@@ -281,42 +289,49 @@ const Search = () => {
   };
 
   const updateUser = async () => {
-  try {
-    setIsLoading(true);
-    const url = "https://riis.denrcalabarzon.com/api/updateUser";
-    const response = await axios.post(url, formData);
+    try {
+      setIsLoading(true);
+      const payload = {
+        ...formData,
+        hdd_capacity:
+          hdd_capacity.find((item) => item.id === formData.hdd_capacity)
+            ?.label || "",
+        ssd_capacity:
+          hdd_capacity.find((item) => item.id === formData.ssd_capacity)
+            ?.label || "",
+      };
+      const url = "https://riis.denrcalabarzon.com/api/updateUser";
+      const response = await axios.post(url, payload);
 
-    if (response.status === 200) {
-      Alert.alert(
-        "Success",
-        response.data.message || "User updated successfully."
-      );
-    } else {
-      Alert.alert("Error", "Unexpected response from the server.");
+      if (response.status === 200) {
+        Alert.alert(
+          "Success",
+          response.data.message || "User updated successfully."
+        );
+      } else {
+        Alert.alert("Error", "Unexpected response from the server.");
+      }
+    } catch (error) {
+      console.log("API Error Response:", error.response?.data);
+
+      // Extract message from API if available
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "An error occurred while processing your request.";
+
+      Alert.alert("Error", errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.log("API Error Response:", error.response?.data);
-
-    // Extract message from API if available
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      "An error occurred while processing your request.";
-
-    Alert.alert("Error", errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const updatePeripherals = async () => {
     try {
       setIsLoading(true);
       const url = "https://riis.denrcalabarzon.com/api/updatePeripherals";
       const response = await axios.post(url, formData);
-
       if (response.status === 200) {
         Alert.alert(
           "Success",
@@ -326,11 +341,15 @@ const Search = () => {
         Alert.alert("Error", "Unexpected response from the server.");
       }
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
+      console.log("API Error Response:", error.response?.data);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "An error occurred while processing your request.";
+
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -654,18 +673,25 @@ const Search = () => {
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
-
               <CustomDropdown
                 label="HDD Capacity:"
                 data={hdd_capacity}
                 value={formData.hdd_capacity}
-                onChange={(value) => handleInputChange("hdd_capacity", value)}
+                onChange={(id) => handleInputChange("hdd_capacity", id)}
               />
+
               <CustomDropdown
-                label={"SSD Capacity:"}
+                label="SSD Capacity:"
+                data={hdd_capacity}
+                value={formData.hdd_capacity}
+                onChange={(id) => handleInputChange("hdd_capacity", id)}
+              />
+
+              <CustomDropdown
+                label="SSD Capacity:"
                 data={hdd_capacity}
                 value={formData.ssd_capacity}
-                onChange={(value) => handleInputChange("ssd_capacity", value)}
+                onChange={(id) => handleInputChange("ssd_capacity", id)}
               />
 
               <CustomText
@@ -692,207 +718,178 @@ const Search = () => {
               </View>
             </ScrollView>
           ) : val === "Peripherals" ? (
-            <ScrollView
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-            >
-              <CustomText
-                label="Brand (Monitor 1):"
-                value={formData.mon_brand_model1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_brand_model1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+            <ScrollView contentContainerStyle={{ padding: 15 }}>
+              {/* MONITOR 1 */}
+              <TouchableOpacity
+                style={styles.header}
+                onPress={() => toggleSection("monitor1")}
+              >
+                <Text style={styles.headerText}>📺 Monitor 1</Text>
+                <AntDesign name={showMonitor1 ? "up" : "down"} size={20} />
+              </TouchableOpacity>
+              {showMonitor1 && (
+                <View style={styles.section}>
+                  {/* Your Monitor 1 fields */}
+                  <CustomText
+                    label="Brand (Monitor 1)"
+                    value={formData.mon_brand_model1}
+                    onChangeText={(v) =>
+                      handleInputChange("mon_brand_model1", v)
+                    }
+                  />
+                  <CustomText
+                    label="Model (Monitor 1)"
+                    value={formData.monitor1Model}
+                    onChangeText={(v) => handleInputChange("monitor1Model", v)}
+                  />
+                  <CustomText
+                    label="Serial Number (Monitor 1)"
+                    value={formData.mon_sn1}
+                    onChangeText={(v) => handleInputChange("mon_sn1", v)}
+                  />
+                  <CustomText
+                    label="QR Code"
+                    value={formData.mon_qr_code1}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_qr_code1", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Model (Monitor 1):"
-                value={formData.monitor1Model}
-                onChangeText={(value) =>
-                  handleInputChange("monitor1Model", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Serial Number (Monitor 1):"
-                value={formData.mon_sn1}
-                onChangeText={(value) => handleInputChange("mon_sn1", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Property Number:"
+                    value={formData.mon_pro_no1}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_pro_no1", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
+                  <CustomText
+                    label="Accountable Person as seen in PN:"
+                    value={formData.mon_acct_user1}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_acct_user1", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="QR Code"
-                value={formData.mon_qr_code1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_qr_code1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Actual User:"
+                    value={formData.mon_actual_user1}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_actual_user1", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Property Number:"
-                value={formData.mon_pro_no1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_pro_no1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN:"
-                value={formData.mon_acct_user1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_acct_user1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomDropdown
+                    label="Status:"
+                    data={statusOptions}
+                    value={formData.monitor1Status}
+                    onChange={(value) =>
+                      handleInputChange("monitor1Status", value)
+                    }
+                  />
+                </View>
+              )}
 
-              <CustomText
-                label="Actual User:"
-                value={formData.mon_actual_user1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_actual_user1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+              {/* MONITOR 2 */}
+              <TouchableOpacity
+                style={styles.header}
+                onPress={() => toggleSection("monitor2")}
+              >
+                <Text style={styles.headerText}>📺 Monitor 2</Text>
+                <AntDesign name={showMonitor2 ? "up" : "down"} size={20} />
+              </TouchableOpacity>
+              {showMonitor2 && (
+                <View style={styles.section}>
+                  {/* Your Monitor 2 fields */}
+                  <CustomText
+                    label="Brand (Monitor 2):"
+                    value={formData.mon_brand_model2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_brand_model2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Brand (Monitor 2):"
-                value={formData.mon_brand_model2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_brand_model2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Model (Monitor 2):"
+                    value={formData.monitor2Model}
+                    onChangeText={(value) =>
+                      handleInputChange("monitor2Model", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Model (Monitor 2):"
-                value={formData.monitor2Model}
-                onChangeText={(value) =>
-                  handleInputChange("monitor2Model", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Serial Number (Monitor 2):"
+                    value={formData.mon_sn2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_sn2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Serial Number (Monitor 2):"
-                value={formData.mon_sn2}
-                onChangeText={(value) => handleInputChange("mon_sn2", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="QR Code"
+                    value={formData.mon_qr_code2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_qr_code2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="QR Code"
-                value={formData.mon_qr_code2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_qr_code2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Property Number:"
+                    value={formData.mon_pro_no2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_pro_no2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
+                  <CustomText
+                    label="Accountable Person as seen in PN:"
+                    value={formData.mon_acct_user2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_acct_user2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
 
-              <CustomText
-                label="Property Number:"
-                value={formData.mon_pro_no2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_pro_no2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN:"
-                value={formData.mon_acct_user2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_acct_user2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                  <CustomText
+                    label="Actual User:"
+                    value={formData.mon_actual_user2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_actual_user2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
+                  <CustomDropdown
+                    label="Status:"
+                    data={statusOptions}
+                    value={formData.monitor2Status}
+                    onChange={(value) =>
+                      handleInputChange("monitor2Status", value)
+                    }
+                  />
+                </View>
+              )}
 
-              <CustomText
-                label="Actual User:"
-                value={formData.mon_actual_user2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_actual_user2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN (UPS)"
-                value={formData.ups_acct_user}
-                onChangeText={(value) =>
-                  handleInputChange("ups_acct_user", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Accountable User:"
-                value={formData.ups_actual_user}
-                onChangeText={(value) =>
-                  handleInputChange("ups_actual_user", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="QR Code:"
-                value={formData.ups_qr_code}
-                onChangeText={(value) =>
-                  handleInputChange("ups_qr_code", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Property Number:"
-                value={formData.ups_property_no}
-                onChangeText={(value) =>
-                  handleInputChange("ups_property_no", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Serial Number:"
-                value={formData.ups_sn}
-                onChangeText={(value) => handleInputChange("ups_sn", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Brand:"
-                value={formData.ups_brand}
-                onChangeText={(value) => handleInputChange("ups_brand", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Model:"
-                value={formData.ups_model}
-                onChangeText={(value) => handleInputChange("ups_model", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+              {/* Save Button */}
               <View style={styles.buttonWrapper}>
-                {user?.roles == 13 ? (
+                {user?.roles == 13 && (
                   <Text style={styles.buttonText} onPress={updatePeripherals}>
                     <AntDesign
                       style={styles.icon}
@@ -902,7 +899,7 @@ const Search = () => {
                     />
                     {isLoading ? "Updating..." : "Update"}
                   </Text>
-                ) : null}
+                )}
               </View>
             </ScrollView>
           ) : null}
@@ -1048,6 +1045,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f766e",
     borderRadius: 8,
     width: "80%",
+  },
+  header: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  headerText: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  section: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
 });
 
