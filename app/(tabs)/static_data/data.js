@@ -32,9 +32,9 @@ export const statusOptions = [
 ];
 export const tabs = [
   { name: "Dashboard", icon: "home" },
-  { name: "Information", icon: "info" },
-  { name: "Specification", icon: "grid" },
-  { name: "Peripherals", icon: "monitor" },
+  // { name: "Information", icon: "info" },
+  // { name: "Specification", icon: "grid" },
+  // { name: "Peripherals", icon: "monitor" },
 ];
 
 export const search_tabs = [

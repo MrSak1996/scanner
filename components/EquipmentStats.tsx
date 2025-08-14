@@ -15,6 +15,8 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 import { Stack, useRouter } from "expo-router";
 import { useAuth } from "../app/(tabs)/static_data/AuthContext";
 import { Modal } from "react-native";
+import TabLayout from "../app/(tabs)/_layout";
+
 import axios from "axios";
 
 const API_BASE_URL = "https://riis.denrcalabarzon.com/api";
@@ -84,7 +86,7 @@ const EquipmentStats = ({ color }) => {
       setSearchResults(response.data.data);
       setModalVisible(true);
     } catch (error) {
-      console.error("Search error:", error);
+      console.error("Search error:", response.data.error);
     } finally {
       setSearching(false);
     }
@@ -212,8 +214,16 @@ const EquipmentStats = ({ color }) => {
                     </Text>
 
                     <Text style={{ color: "#555", marginBottom: 4 }}>
-                      <Text style={{ fontWeight: "600" }}>ID:</Text>{" "}
+                      <Text style={{ fontWeight: "600" }}>QR Code:</Text>{" "}
                       {item.qr_code || "N/A"}
+                    </Text>
+                    <Text style={{ color: "#555", marginBottom: 4 }}>
+                      <Text style={{ fontWeight: "600" }}>Primary Monitor Code:</Text>{" "}
+                      {item.mon_qr_code1 || "N/A"}
+                    </Text>
+                     <Text style={{ color: "#555", marginBottom: 4 }}>
+                      <Text style={{ fontWeight: "600" }}>Secondary Monitor Code:</Text>{" "}
+                      {item.mon_qr_code2 || "N/A"}
                     </Text>
                     <Text style={{ color: "#555", marginBottom: 4 }}>
                       <Text style={{ fontWeight: "600" }}>Serial No:</Text>{" "}
@@ -282,13 +292,7 @@ const EquipmentStats = ({ color }) => {
       </View>
 
       {/* Buttons */}
-      <TouchableOpacity
-        onPress={() => router.push("/(tabs)/scanner")}
-        style={styles.buttonPrimary}
-      >
-        <Text style={styles.buttonText}>Scan QR Code</Text>
-      </TouchableOpacity>
-
+     
       <TouchableOpacity
         style={styles.buttonSecondary}
         onPress={() => setSearchVisible(!searchVisible)}
@@ -338,13 +342,14 @@ const EquipmentStats = ({ color }) => {
           ))}
         </Animated.View>
       )}
+      <TabLayout/>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 30,
+    paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 50,
     alignItems: "center",
@@ -352,7 +357,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
     width: "100%",
   },
   img: {

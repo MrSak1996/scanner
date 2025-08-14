@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { NavigationContainer } from "@react-navigation/native";
 import {
   SafeAreaView,
   View,
@@ -12,15 +13,21 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  Animated,
 } from "react-native";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Dropdown } from "react-native-element-dropdown";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import CustomDropdown from "@/components/CustomDropdown";
 import CustomText from "@/components/CustomText";
-import ColorList from "@/components/EquipmentStats";
+import BottomSheet from "@/components/BottomSheet";
 
+import ColorList from "@/components/EquipmentStats";
+import axios from "axios";
+import EquipmentStats from "@/components/EquipmentStats";
+import { useAuth } from "./static_data/AuthContext";
 import {
   yearData,
   statusOptions,
@@ -32,15 +39,14 @@ import {
   ram_opts,
 } from "./static_data/data";
 
-import axios from "axios";
-import EquipmentStats from "@/components/EquipmentStats";
-import { useAuth } from "./static_data/AuthContext";
-
 const Create = () => {
+  const router = useRouter();
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
   const { designation } = useLocalSearchParams<{ designation: string }>();
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
+  const [status, setStatus] = React.useState(false);
+
   const [formData, setFormData] = useState({
     qrCode: qrCode || "",
     equipment_status: "",
@@ -115,18 +121,34 @@ const Create = () => {
   const [error, setError] = useState("");
   const [focusedInput, setFocusedInput] = useState(null);
 
+  const addScale = useRef(new Animated.Value(1)).current;
+  const searchScale = useRef(new Animated.Value(1)).current;
+  const qrScale = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
     qrCode && searchUser(qrCode);
   }, [qrCode]);
 
   useEffect(() => {
-    fetchWorkData();
-    fetchEquipmentData();
-    fetchDivisionData();
-    fetchEmployment();
-    fetchRangeCategory();
+    // fetchWorkData();
+    // fetchEquipmentData();
+    // fetchDivisionData();
+    // fetchEmployment();
+    // fetchRangeCategory();
   }, []);
-
+  const handlePressIn = (scaleAnim) => {
+    Animated.spring(scaleAnim, {
+      toValue: 1.2, // zoom in
+      useNativeDriver: true,
+    }).start();
+  };
+  const handlePressOut = (scaleAnim) => {
+    Animated.spring(scaleAnim, {
+      toValue: 1, // back to normal
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+  };
   const fetchWorkData = async () => {
     try {
       setIsLoading(true);
@@ -280,15 +302,15 @@ const Create = () => {
   const updateUser = async () => {
     try {
       setIsLoading(true);
-         const payload = {
-              ...formData,
-              hdd_capacity:
-                hdd_capacity.find((item) => item.id === formData.hdd_capacity)
-                  ?.label || "",
-              ssd_capacity:
-                hdd_capacity.find((item) => item.id === formData.ssd_capacity)
-                  ?.label || "",
-            };
+      const payload = {
+        ...formData,
+        hdd_capacity:
+          hdd_capacity.find((item) => item.id === formData.hdd_capacity)
+            ?.label || "",
+        ssd_capacity:
+          hdd_capacity.find((item) => item.id === formData.ssd_capacity)
+            ?.label || "",
+      };
       const url = "https://riis.denrcalabarzon.com/api/updateUser";
       const response = await axios.post(url, payload);
 
@@ -381,19 +403,8 @@ const Create = () => {
         style={styles.container}
         behavior={Platform.OS === "android" ? "padding" : "height"}
       >
-        {/* <Stack.Screen
-          name="About"
-          options={{
-            title: "DENR IV-A (CALABARZON)",
-            headerShown: false,
-            headerStyle: { backgroundColor: "#0f766e" },
-            headerTintColor: "#fff",
-            headerTitleStyle: { fontWeight: "bold" },
-          }}
-        /> */}
-
         <View style={styles.placeholder}>
-          <View style={styles.tabs}>
+          {/* <View style={styles.tabs}>
             {tabs.map(({ name, icon }, index) => {
               const isActive = name === val;
               return (
@@ -432,8 +443,7 @@ const Create = () => {
                 </View>
               );
             })}
-          </View>
-
+          </View> */}
           {isLoading ? (
             <ActivityIndicator size="large" color="#0000ff" />
           ) : val === "Dashboard" ? (
@@ -646,9 +656,7 @@ const Create = () => {
               <CustomText
                 label="HDD Capacity:"
                 value={formData.hdd_capacity}
-                onChangeText={(id) =>
-                  handleInputChange("hdd_capacity", id)
-                }
+                onChangeText={(id) => handleInputChange("hdd_capacity", id)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
@@ -897,6 +905,55 @@ const Create = () => {
               </View>
             </ScrollView>
           ) : null}
+          <View style={styles.container}>
+            {/* Add Button */}
+            <TouchableWithoutFeedback
+              onPressIn={() => handlePressIn(addScale)}
+              onPressOut={() => handlePressOut(addScale)}
+            >
+              <Animated.View
+                style={[styles.addButton, { transform: [{ scale: addScale }] }]}
+              >
+                <AntDesign name="addfile" size={24} color="white" />
+              </Animated.View>
+            </TouchableWithoutFeedback>
+            {/* Scan QR Button */}
+            <TouchableWithoutFeedback
+              onPressIn={() => handlePressIn(qrScale)}
+              onPressOut={() => handlePressOut(qrScale)}
+              onPress={() => router.push("(tabs)/scanner")}
+            >
+              <Animated.View
+                style={[
+                  styles.addButton,
+                  { left: 100, transform: [{ scale: qrScale }] },
+                ]}
+              >
+                <AntDesign name="qrcode" size={24} color="white" />
+              </Animated.View>
+            </TouchableWithoutFeedback>
+            {/* Search Button */}
+            <View style={styles.searchContainer}>
+              <TouchableWithoutFeedback
+                onPressIn={() => handlePressIn(searchScale)}
+                onPressOut={() => handlePressOut(searchScale)}
+                onPress={() => setStatus(true)}
+              >
+                <Animated.View
+                  style={[
+                    styles.addButton,
+                    { left: 250, transform: [{ scale: searchScale }] },
+                  ]}
+                >
+                  <AntDesign name="search1" size={24} color="white" />
+                </Animated.View>
+              </TouchableWithoutFeedback>
+
+              {status && <BottomSheet setStatus={setStatus} />}
+            </View>
+
+           
+          </View>
         </View>
       </KeyboardAvoidingView>
     </>
@@ -904,6 +961,11 @@ const Create = () => {
 };
 
 const styles = StyleSheet.create({
+  searchContainer:{
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   dropdownItem: {
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -963,6 +1025,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 6,
     backgroundColor: "transparent",
+    justifyContent:'center'
   },
   subTitle: {
     marginBottom: 16,
@@ -1029,6 +1092,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f766e",
     borderRadius: 8,
     width: "80%",
+  },
+
+  addButton: {
+    backgroundColor: "#0f766e", // Blue background
+    width: 60,
+    height: 60,
+    borderRadius: 30, // Makes it round
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5, // For Android shadow
+    top: -50,
+    left: 175,
+    position: "absolute",
+  },
+  addButtonText: {
+    fontSize: 30,
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

@@ -15,8 +15,11 @@ import { Stack, useRouter } from "expo-router";
 import { Overlay } from "../Overlay"; // Ensure this file exists
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons"; // Import Ionicons for the back icon
+import { useIsFocused } from "@react-navigation/native";
 
 export default function Home() {
+  const isFocused = useIsFocused();
+
   const qrLock = useRef(false);
   const appState = useRef(AppState.currentState);
   const router = useRouter();
@@ -47,7 +50,7 @@ export default function Home() {
   }, []);
 
   const handleBarcodeScanned = async ({ data }) => {
-    if (qrLock.current) return; // Prevent multiple scans
+    if (qrLock.current) return;
     qrLock.current = true;
 
     try {
@@ -56,24 +59,18 @@ export default function Home() {
         { params: { id: data } }
       );
 
-
-      // if (response.data && response.data.length > 0 && response.data[0].control_id) {
-        setTimeout(() => {
-          router.push({
-            pathname: "../create",
-            params: {
-              qrCode: data,
-              details: JSON.stringify(response.data),
-            },
-          });
-          qrLock.current = false; // Unlock after navigation
-        }, 500);
-      // } else {
-      //   console.log("error"+data);
-      //   qrLock.current = false;
-      // }
+      setTimeout(() => {
+        // Release camera by navigating only after unmount
+        router.push({
+          pathname: "../search",
+          params: {
+            qrCode: data,
+            details: JSON.stringify(response.data),
+          },
+        });
+        qrLock.current = false;
+      }, 500);
     } catch (error) {
-      // alert("Failed to fetch data. Please try again.");
       console.error("API Error:", error);
       qrLock.current = false;
     }
@@ -109,17 +106,21 @@ export default function Home() {
 
       {/* Custom Header with Back Button */}
       <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.push("../create")} style={styles.backButton}>
-      <Ionicons name="arrow-back" size={24} color="white" />
+        <TouchableOpacity
+          onPress={() => router.push("../create")}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>QR Code Scanner</Text>
       </View>
-
-      <CameraView
-        style={StyleSheet.absoluteFillObject}
-        facing="back"
-        onBarcodeScanned={handleBarcodeScanned}
-      />
+      {isFocused && (
+        <CameraView
+          style={StyleSheet.absoluteFillObject}
+          facing="back"
+          onBarcodeScanned={handleBarcodeScanned}
+        />
+      )}
       <Overlay />
     </SafeAreaView>
   );
@@ -172,4 +173,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

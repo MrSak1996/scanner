@@ -132,9 +132,14 @@ const Search = () => {
     if (section === "monitor2") setShowMonitor2(!showMonitor2);
     if (section === "ups") setShowUPS(!showUPS);
   };
-  useEffect(() => {
-    id && searchUser(id);
-  }, [id]);
+ useEffect(() => {
+  if (id) {
+    searchUser(id);
+  } else if (qrCode) {
+    searchUser(qrCode);
+  }
+}, [id, qrCode]);
+
 
   useEffect(() => {
     fetchWorkData();
@@ -477,7 +482,7 @@ const Search = () => {
             >
               <CustomText
                 label="QR Code:"
-                value={id}
+                value={qrCode}
                 onChangeText={(value) => handleInputChange("qrCode", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
@@ -730,6 +735,15 @@ const Search = () => {
               {showMonitor1 && (
                 <View style={styles.section}>
                   {/* Your Monitor 1 fields */}
+                   <CustomText
+                    label="QR Code"
+                    value={formData.mon_qr_code1}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_qr_code1", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
                   <CustomText
                     label="Brand (Monitor 1)"
                     value={formData.mon_brand_model1}
@@ -747,15 +761,7 @@ const Search = () => {
                     value={formData.mon_sn1}
                     onChangeText={(v) => handleInputChange("mon_sn1", v)}
                   />
-                  <CustomText
-                    label="QR Code"
-                    value={formData.mon_qr_code1}
-                    onChangeText={(value) =>
-                      handleInputChange("mon_qr_code1", value)
-                    }
-                    focusedInput={focusedInput}
-                    setFocusedInput={setFocusedInput}
-                  />
+                 
 
                   <CustomText
                     label="Property Number:"
@@ -808,6 +814,15 @@ const Search = () => {
               {showMonitor2 && (
                 <View style={styles.section}>
                   {/* Your Monitor 2 fields */}
+                   <CustomText
+                    label="QR Code"
+                    value={formData.mon_qr_code2}
+                    onChangeText={(value) =>
+                      handleInputChange("mon_qr_code2", value)
+                    }
+                    focusedInput={focusedInput}
+                    setFocusedInput={setFocusedInput}
+                  />
                   <CustomText
                     label="Brand (Monitor 2):"
                     value={formData.mon_brand_model2}
@@ -838,15 +853,7 @@ const Search = () => {
                     setFocusedInput={setFocusedInput}
                   />
 
-                  <CustomText
-                    label="QR Code"
-                    value={formData.mon_qr_code2}
-                    onChangeText={(value) =>
-                      handleInputChange("mon_qr_code2", value)
-                    }
-                    focusedInput={focusedInput}
-                    setFocusedInput={setFocusedInput}
-                  />
+                 
 
                   <CustomText
                     label="Property Number:"
