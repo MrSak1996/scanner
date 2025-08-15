@@ -1,1120 +1,518 @@
-import React, { useState, useEffect, useRef } from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
-  Image,
-  TextInput,
   StyleSheet,
   ScrollView,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
-  ActivityIndicator,
-  TouchableWithoutFeedback,
+  TextInput,
+  Image,
   Animated,
+  Modal,
 } from "react-native";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Dropdown } from "react-native-element-dropdown";
-import FeatherIcon from "react-native-vector-icons/Feather";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import CustomDropdown from "@/components/CustomDropdown";
-import CustomText from "@/components/CustomText";
-import BottomSheet from "@/components/BottomSheet";
-
-import ColorList from "@/components/EquipmentStats";
 import axios from "axios";
-import EquipmentStats from "@/components/EquipmentStats";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useAuth } from "./static_data/AuthContext";
-import {
-  yearData,
-  statusOptions,
-  hdd_capacity,
-  tabs,
-  network_type,
-  gpu_type,
-  wireless_type,
-  ram_opts,
-} from "./static_data/data";
 
-const Create = () => {
+const API_BASE_URL = "https://riis.denrcalabarzon.com/api";
+
+export default function Create() {
   const router = useRouter();
-  const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
-  const { designation } = useLocalSearchParams<{ designation: string }>();
-  const [value, setValue] = useState(null);
-  const [isFocus, setIsFocus] = useState(false);
+  const { user } = useAuth();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const fadeAnim = useState(new Animated.Value(0))[0];
   const [status, setStatus] = React.useState(false);
 
-  const [formData, setFormData] = useState({
-    qrCode: qrCode || "",
-    equipment_status: "",
-    control_id: "",
-    division: "",
-    user: "",
-    control_no: "",
-    division_id: "",
-    item_status: "",
-    division_title: "",
-    acct_person: "",
-    actual_user: "",
-    employment_title: "",
-    actual_employment_type: "",
-    work_nature_id: "",
-    nature_work_title: "",
-    equipment_type: "",
-    equipment_title: "",
-    property_no: "",
-    serial_no: "",
-    brand: "",
-    model: "",
-    year_acquired: "",
-    acquisition_cost: "",
-    range_category: "",
-    range_title: "",
-    processor: "",
-    specs_net: "",
-    specs_gpu: "",
-    dedicated_information: "",
-    ram_type: "",
-    ram_capacity: "",
-    no_of_hdd: "",
-    no_of_ssd: "",
-    hdd_capacity: "",
-    ssd_capacity: "",
-    wireless_type: "",
-    os_installed: "",
-    mon_brand_model1: "",
-    mon_brand_model2: "",
-    monitor1Model: "",
-    monitor2Model: "",
-    mon_sn1: "",
-    mon_sn2: "",
-    mon_qr_code1: "",
-    mon_qr_code2: "",
-    mon_pro_no1: "",
-    mon_pro_no2: "",
-    mon_acct_user1: "",
-    mon_acct_user2: "",
-    mon_actual_user1: "",
-    mon_actual_user2: "",
-    ups_qr_code: "",
-    ups_brand: "",
-    ups_model: "",
-    ups_acct_user: "",
-    ups_actual_user: "",
-    ups_property_no: "",
-    ups_sn: "",
-    monitor1Status: "",
-    monitor2Status: "",
-  });
-  const { user } = useAuth();
+  const [stats, setStats] = useState([
+    {
+      title: "Total ICT Equipment",
+      total: 0,
+      icon: "laptop",
+      api: `/vw-gen-info?designation=${user?.roles}`,
+    },
+    {
+      title: "Total Serviceable Equipment",
+      total: 0,
+      icon: "tool",
+      api: `/getCountStatus?designation=${user?.roles}`,
+    },
+    {
+      title: "Total Unserviceable Equipment",
+      total: 0,
+      icon: "closecircleo",
+      api: `/getCountStatus?designation=${user?.roles}`,
+    },
+    {
+      title: "Total Outdated Equipment",
+      total: 0,
+      icon: "hourglass",
+      api: `/getOutdatedEquipment?designation=${user?.roles}`,
+    },
+    {
+      title: "Total Incomplete Data",
+      total: 0,
+      icon: "exclamationcircleo",
+      api: `/vw-invalid-data?designation=${user?.roles}`,
+    },
+  ]);
 
-  const [data, setData] = useState([]);
-  const [workData, setWorkData] = useState([]);
-  const [employmentData, setEmploymentData] = useState([]);
-  const [equipmentList, setEquipmentData] = useState([]);
-  const [divisionData, setDivisionData] = useState([]);
-  const [rangeData, setRangeData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [focusedInput, setFocusedInput] = useState(null);
+  const [incomeData, setIncomeData] = useState([
+    { title: "Monthly Salary", amount: "$10,086.50", percentage: 50 },
+    { title: "Passive Income", amount: "$3,631.14", percentage: 18 },
+    { title: "Freelance", amount: "$3,429.41", percentage: 17 },
+    { title: "Side Business", amount: "$3,025.95", percentage: 15 },
+  ]);
 
-  const addScale = useRef(new Animated.Value(1)).current;
-  const searchScale = useRef(new Animated.Value(1)).current;
-  const qrScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    qrCode && searchUser(qrCode);
-  }, [qrCode]);
-
-  useEffect(() => {
-    // fetchWorkData();
-    // fetchEquipmentData();
-    // fetchDivisionData();
-    // fetchEmployment();
-    // fetchRangeCategory();
-  }, []);
-  const handlePressIn = (scaleAnim) => {
-    Animated.spring(scaleAnim, {
-      toValue: 1.2, // zoom in
-      useNativeDriver: true,
-    }).start();
-  };
-  const handlePressOut = (scaleAnim) => {
-    Animated.spring(scaleAnim, {
-      toValue: 1, // back to normal
-      friction: 3,
-      useNativeDriver: true,
-    }).start();
-  };
-  const fetchWorkData = async () => {
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
     try {
-      setIsLoading(true);
+      setSearching(true);
       const response = await axios.get(
-        "https://riis.denrcalabarzon.com/api/fetchNatureWork"
+        `${API_BASE_URL}/vw-gen-info?designation=${
+          user?.roles
+        }&search=${encodeURIComponent(searchQuery)}`
       );
-      setWorkData(response.data);
+      setSearchResults(response.data.data);
+      setModalVisible(true);
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
+      console.error("Search error:", error);
     } finally {
-      setIsLoading(false);
+      setSearching(false);
     }
   };
 
-  const fetchEquipmentData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        "https://riis.denrcalabarzon.com/api/fetchEquipment"
-      );
-      setEquipmentData(response.data);
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchDivisionData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        "https://riis.denrcalabarzon.com/api/fetchDivisionData",
-        {
-          withCredentials: true,
-        }
-      );
-      setDivisionData(response.data);
-    } catch (error) {
-      alert("Error fetching division data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchEmployment = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        "https://riis.denrcalabarzon.com/api/fetchEmploymentType"
-      );
-      setEmploymentData(response.data);
-    } catch (error) {
-      alert("Error fetching employment data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchRangeCategory = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        "https://riis.denrcalabarzon.com/api/fetchRangeEntry"
-      );
-      setRangeData(response.data);
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const searchUser = async (id) => {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      const url = `https://riis.denrcalabarzon.com/api/fetchNativeAPI?id=${id}`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
+  const handleEdit = (item) => {
+    setModalVisible(false);
+    setTimeout(() => {
+      router.push({
+        pathname: "/(tabs)/search",
+        params: { id: item.qr_code },
       });
-
-      if (!response.ok) {
-        throw new Error(
-          `Server returned an error: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const result = await response.json();
-
-      if (Array.isArray(result) && result.length > 0) {
-        const [item] = result;
-
-        // Find ID from hdd_capacity list
-        const matchedCapacity = hdd_capacity.find(
-          (cap) =>
-            cap.label.trim().toLowerCase() ===
-            item.hdd_capacity?.trim().toLowerCase()
-        );
-        const matchedSSDCapacity = hdd_capacity.find(
-          (cap) =>
-            cap.label.trim().toLowerCase() ===
-            item.ssd_capacity?.trim().toLowerCase()
-        );
-        setData(result);
-
-        setFormData((prev) => ({
-          ...prev,
-          ...item,
-          hdd_capacity: matchedCapacity ? matchedCapacity.id : "",
-          ssd_capacity: matchedSSDCapacity ? matchedSSDCapacity.id : "",
-          no_of_hdd: item.no_of_hdd || "",
-          no_of_ssd: item.no_of_ssd || "",
-          wireless_type: item.wireless_type || "",
-          year_acquired: Number(item.year_acquired),
-          item_status: item.item_status,
-          ram_type: Number(item.ram_type),
-        }));
-      } else {
-        setData([]);
-        setError("No data found for the provided ID.");
-      }
-    } catch (err) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    }, 300);
   };
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const updatedStats = await Promise.all(
+          stats.map(async (item) => {
+            const response = await fetch(`${API_BASE_URL}${item.api}`);
+            const data = await response.json();
 
-  const updateUser = async () => {
-    try {
-      setIsLoading(true);
-      const payload = {
-        ...formData,
-        hdd_capacity:
-          hdd_capacity.find((item) => item.id === formData.hdd_capacity)
-            ?.label || "",
-        ssd_capacity:
-          hdd_capacity.find((item) => item.id === formData.ssd_capacity)
-            ?.label || "",
-      };
-      const url = "https://riis.denrcalabarzon.com/api/updateUser";
-      const response = await axios.post(url, payload);
-
-      if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          response.data.message || "User updated successfully."
+            if (item.api.includes("vw-gen-info")) {
+              return { ...item, total: data.total };
+            }
+            if (item.api.includes("getOutdatedEquipment")) {
+              return { ...item, total: data[0]?.total || 0 };
+            }
+            if (item.api.includes("getCountStatus")) {
+              return {
+                ...item,
+                total: item.title.includes("Serviceable")
+                  ? data[0]?.serviceable || 0
+                  : data[0]?.unserviceable || 0,
+              };
+            }
+            if (item.api.includes("Incomplete")) {
+              return { ...item, total: data[0]?.total || 0 };
+            }
+            return { ...item, total: data.count || 0 };
+          })
         );
-      } else {
-        Alert.alert("Error", "Unexpected response from the server.");
+        setStats(updatedStats);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }).start();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updatePeripherals = async () => {
-    try {
-      setIsLoading(true);
-      const url = "https://riis.denrcalabarzon.com/api/updatePeripherals";
-      const response = await axios.post(url, formData);
-
-      if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          response.data.message || "Updated successfully."
-        );
-      } else {
-        Alert.alert("Error", "Unexpected response from the server.");
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        "An error occurred while processing your request.",
-        error.response || error.message
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInputChange = (name, value) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const [val, setTabValue] = useState(tabs[0].name);
-  const allowedUsernames = [
-    "denr4@_rict",
-    "penro_laguna",
-    "penro_batangas",
-    "regional_office",
-    "penro_quezon",
-    "cenro_lipa",
-    "penro_cavite",
-    "admin_pmd",
-    "penro_rizal",
-    "cenro_stacruz",
-    "cenro_calaca",
-    "cenro_calauag",
-    "cenro_catanuan",
-    "cenro_tayabas",
-    "cenro_real",
-    "denr4@_loel",
-    "denr4@_ken",
-  ];
-
-  <View style={styles.buttonWrapper}>
-    {allowedUsernames.includes(user?.username) && (
-      <Text style={styles.buttonText} onPress={updateUser}>
-        <AntDesign
-          style={styles.icon}
-          color={isFocus ? "blue" : "black"}
-          name="save"
-          size={25}
-        />
-        {isLoading ? "Updating..." : user?.username}
-      </Text>
-    )}
-  </View>;
+    };
+    fetchData();
+  }, []);
 
   return (
-    <>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "android" ? "padding" : "height"}
-      >
-        <View style={styles.placeholder}>
-          {/* <View style={styles.tabs}>
-            {tabs.map(({ name, icon }, index) => {
-              const isActive = name === val;
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.tabWrapper,
-                    isActive
-                      ? { borderColor: "#00695C", borderBottomWidth: 2 }
-                      : {},
-                  ]}
-                >
-                  {" "}
-                  <TouchableOpacity onPress={() => setTabValue(name)}>
-                    <View style={styles.tab}>
-                      <FeatherIcon
-                        name={icon}
-                        size={30}
-                        color={isActive ? "#00695C" : "#6b7280"}
-                      />
-                      <Text
-                        style={[
-                          styles.tabText,
-                          isActive
-                            ? {
-                                color: "#00695C",
-                                fontFamily: "PoppinsSemiBold",
-                              }
-                            : {},
-                        ]}
-                      >
-                        {name}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View> */}
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : val === "Dashboard" ? (
-            <EquipmentStats color="#08254b" />
-          ) : val === "Information" ? (
-            <ScrollView
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
+    <View style={styles.container}>
+      {/* Half green / half black banner */}
+      <View style={styles.topBanner}>
+        {" "}
+        <Image
+          style={styles.bannerLogo}
+          source={require("../../assets/images/denr_logo.png")}
+          resizeMode="contain"
+        />{" "}
+        <Text style={styles.topBannerText}>
+          {" "}
+          Department of Environment and Natural Resources{"\n"}REGION IV-A
+          (CALABARZON){" "}
+        </Text>{" "}
+      </View>
+
+      {/* Header */}
+
+      <Text style={styles.header}>
+        <Ionicons name="home" size={26} color="#1A237E" />
+        Dashboard
+      </Text>
+
+      {/* Search */}
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color="#999" />
+        <TextInput
+          placeholder="Search"
+          placeholderTextColor="#999"
+          style={[styles.searchInput, { flex: 1 }]} // take available space
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+        />
+        <TouchableOpacity
+          onPress={handleSearch}
+          style={{
+            backgroundColor: "#4CAF50",
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 6,
+            marginLeft: 6,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>Go</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView>
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 10,
+                padding: 20,
+                width: "90%",
+                maxHeight: "80%",
+              }}
             >
-              <CustomText
-                label="QR Code:"
-                value={qrCode}
-                onChangeText={(value) => handleInputChange("qrCode", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  marginBottom: 10,
+                  textAlign: "center",
+                }}
+              >
+                Search Results
+              </Text>
 
-              <CustomDropdown
-                label="Division:"
-                data={divisionData}
-                value={formData.division_id}
-                onChange={(value) => handleInputChange("division_id", value)}
-              />
+              <ScrollView>
+                {searchResults.length > 0 ? (
+                  searchResults.map((item, index) => (
+                    <View
+                      key={index}
+                      style={{
+                        backgroundColor: "#e6f4f1", // soft green background
+                        padding: 15,
+                        borderRadius: 12,
+                        marginBottom: 12,
+                        borderWidth: 1,
+                        borderColor: "#b2dfdb", // light teal border
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 3,
+                        elevation: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "bold",
+                          color: "#004d40", // deep green
+                          marginBottom: 8,
+                        }}
+                      >
+                        {item.equipment_title || "No Name"}
+                      </Text>
 
-              <CustomText
-                label="Accountable Person:"
-                value={formData.acct_person}
-                onChangeText={(value) =>
-                  handleInputChange("acct_person", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+                      <Text style={{ color: "#555", marginBottom: 4 }}>
+                        <Text style={{ fontWeight: "600" }}>QR Code:</Text>{" "}
+                        {item.qr_code || "N/A"}
+                      </Text>
+                      <Text style={{ color: "#555", marginBottom: 4 }}>
+                        <Text style={{ fontWeight: "600" }}>
+                          Primary Monitor Code:
+                        </Text>{" "}
+                        {item.mon_qr_code1 || "N/A"}
+                      </Text>
+                      <Text style={{ color: "#555", marginBottom: 4 }}>
+                        <Text style={{ fontWeight: "600" }}>
+                          Secondary Monitor Code:
+                        </Text>{" "}
+                        {item.mon_qr_code2 || "N/A"}
+                      </Text>
+                      <Text style={{ color: "#555", marginBottom: 4 }}>
+                        <Text style={{ fontWeight: "600" }}>Serial No:</Text>{" "}
+                        {item.serial_no || "N/A"}
+                      </Text>
+                      <Text style={{ color: "#555", marginBottom: 8 }}>
+                        <Text style={{ fontWeight: "600" }}>Property No:</Text>{" "}
+                        {item.property_no || "N/A"}
+                      </Text>
 
-              <CustomText
-                label="Actual User:"
-                value={formData.actual_user}
-                onChangeText={(value) =>
-                  handleInputChange("actual_user", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomDropdown
-                label="Employment Type:"
-                data={employmentData}
-                value={formData.actual_employment_type}
-                onChange={(value) =>
-                  handleInputChange("actual_employment_type", value)
-                }
-              />
-
-              <CustomDropdown
-                label="Nature of Work:"
-                data={workData}
-                value={formData.actual_employment_type}
-                onChange={(value) => handleInputChange("work_nature_id", value)}
-              />
-              <CustomDropdown
-                label="Equipment Type:"
-                data={equipmentList}
-                value={formData.equipment_type}
-                onChange={(value) => handleInputChange("equipment_type", value)}
-              />
-              <CustomDropdown
-                label="Range Category:"
-                data={rangeData}
-                value={formData.range_category}
-                onChange={(value) => handleInputChange("range_category", value)}
-              />
-              <CustomDropdown
-                label="Year Acquired:"
-                data={yearData}
-                value={formData.year_acquired}
-                onChange={(value) => handleInputChange("year_acquired", value)}
-              />
-
-              <CustomText
-                label="Serial Number:"
-                value={formData.serial_no}
-                onChangeText={(value) => handleInputChange("serial_no", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Brand:"
-                value={formData.brand}
-                onChangeText={(value) => handleInputChange("brand", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Model:"
-                value={formData.model}
-                onChangeText={(value) => handleInputChange("model", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Acquisition Cost:"
-                value={formData.acquisition_cost}
-                onChangeText={(value) =>
-                  handleInputChange("acquisition_cost", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomDropdown
-                label="Status:"
-                data={statusOptions}
-                value={formData.item_status}
-                onChange={(value) => handleInputChange("item_status", value)}
-              />
-
-              <View style={styles.buttonWrapper}>
-                {allowedUsernames.includes(user?.username) && (
-                  <Text style={styles.buttonText} onPress={updateUser}>
-                    <AntDesign
-                      style={styles.icon}
-                      color={isFocus ? "blue" : "black"}
-                      name="save"
-                      size={25}
-                    />
-                    {isLoading ? "Updating..." : "Update"}
+                      {/* Edit Button */}
+                      <TouchableOpacity
+                        onPress={() => handleEdit(item)} // use your actual function
+                        style={{
+                          backgroundColor: "#607D8B",
+                          paddingVertical: 10,
+                          borderRadius: 8,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                          Edit
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={{ textAlign: "center", color: "#666" }}>
+                    No results found
                   </Text>
                 )}
-              </View>
-            </ScrollView>
-          ) : val === "Specification" ? (
-            <ScrollView
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-            >
-              <CustomText
-                label="Processor:"
-                value={formData.processor}
-                onChangeText={(value) => handleInputChange("processor", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
+              </ScrollView>
 
-              <CustomDropdown
-                label="Specs (Net):"
-                data={network_type}
-                value={formData.specs_net}
-                onChange={(value) => handleInputChange("specs_net", value)}
-              />
-
-              <CustomDropdown
-                label="Wireless Type:"
-                data={wireless_type}
-                value={formData.wireless_type}
-                onChange={(value) => handleInputChange("wireless_type", value)}
-              />
-
-              <CustomDropdown
-                label="Specs (GPU):"
-                data={gpu_type}
-                value={formData.specs_gpu}
-                onChange={(value) => handleInputChange("specs_gpu", value)}
-              />
-
-              <CustomText
-                label="Dedicated Information:"
-                value={formData.dedicated_information}
-                onChangeText={(value) =>
-                  handleInputChange("dedicated_information", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomDropdown
-                label="RAM Type:"
-                data={ram_opts}
-                value={formData.ram_type}
-                onChange={(value) => handleInputChange("ram_type", value)}
-              />
-
-              <CustomText
-                label="RAM Capacity:"
-                value={formData.ram_capacity}
-                onChangeText={(value) =>
-                  handleInputChange("ram_capacity", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Number of HDD's:"
-                value={formData.no_of_hdd}
-                onChangeText={(value) => handleInputChange("no_of_hdd", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Number of SDD's:"
-                value={formData.no_of_ssd}
-                onChangeText={(value) => handleInputChange("no_of_ssd", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="HDD Capacity:"
-                value={formData.hdd_capacity}
-                onChangeText={(id) => handleInputChange("hdd_capacity", id)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomDropdown
-                label={"SSD Capacity:"}
-                data={hdd_capacity}
-                value={formData.ssd_capacity}
-                onChange={(id) => handleInputChange("ssd_capacity", id)}
-              />
-              <CustomText
-                label="Operating System Installed:"
-                value={formData.os_installed}
-                onChangeText={(value) =>
-                  handleInputChange("os_installed", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <View style={styles.buttonWrapper}>
-                {user?.email === "kimsacluti10101996@gmail.com" ? (
-                  <Text style={styles.buttonText} onPress={updateUser}>
-                    <AntDesign
-                      style={styles.icon}
-                      color={isFocus ? "blue" : "black"}
-                      name="save"
-                      size={25}
-                    />
-                    {isLoading ? "Updating..." : "Update"}
-                  </Text>
-                ) : null}
-              </View>
-            </ScrollView>
-          ) : val === "Peripherals" ? (
-            <ScrollView
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-            >
-              <CustomText
-                label="Brand (Monitor 1):"
-                value={formData.mon_brand_model1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_brand_model1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Model (Monitor 1):"
-                value={formData.monitor1Model}
-                onChangeText={(value) =>
-                  handleInputChange("monitor1Model", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Serial Number (Monitor 1):"
-                value={formData.mon_sn1}
-                onChangeText={(value) => handleInputChange("mon_sn1", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="QR Code"
-                value={formData.mon_qr_code1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_qr_code1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Property Number:"
-                value={formData.mon_pro_no1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_pro_no1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN:"
-                value={formData.mon_acct_user1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_acct_user1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Actual User:"
-                value={formData.mon_actual_user1}
-                onChangeText={(value) =>
-                  handleInputChange("mon_actual_user1", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Brand (Monitor 2):"
-                value={formData.mon_brand_model2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_brand_model2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Model (Monitor 2):"
-                value={formData.monitor2Model}
-                onChangeText={(value) =>
-                  handleInputChange("monitor2Model", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Serial Number (Monitor 2):"
-                value={formData.mon_sn2}
-                onChangeText={(value) => handleInputChange("mon_sn2", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="QR Code"
-                value={formData.mon_qr_code2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_qr_code2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Property Number:"
-                value={formData.mon_pro_no2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_pro_no2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN:"
-                value={formData.mon_acct_user2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_acct_user2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Actual User:"
-                value={formData.mon_actual_user2}
-                onChangeText={(value) =>
-                  handleInputChange("mon_actual_user2", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <CustomText
-                label="Accountable Person as seen in PN (UPS)"
-                value={formData.ups_acct_user}
-                onChangeText={(value) =>
-                  handleInputChange("ups_acct_user", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Accountable User:"
-                value={formData.ups_actual_user}
-                onChangeText={(value) =>
-                  handleInputChange("ups_actual_user", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="QR Code:"
-                value={formData.ups_qr_code}
-                onChangeText={(value) =>
-                  handleInputChange("ups_qr_code", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Property Number:"
-                value={formData.ups_property_no}
-                onChangeText={(value) =>
-                  handleInputChange("ups_property_no", value)
-                }
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Serial Number:"
-                value={formData.ups_sn}
-                onChangeText={(value) => handleInputChange("ups_sn", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Brand:"
-                value={formData.ups_brand}
-                onChangeText={(value) => handleInputChange("ups_brand", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-
-              <CustomText
-                label="Model:"
-                value={formData.ups_model}
-                onChangeText={(value) => handleInputChange("ups_model", value)}
-                focusedInput={focusedInput}
-                setFocusedInput={setFocusedInput}
-              />
-              <View style={styles.buttonWrapper}>
-                {user?.roles == 13 ? (
-                  <Text style={styles.buttonText} onPress={updatePeripherals}>
-                    <AntDesign
-                      style={styles.icon}
-                      color={isFocus ? "blue" : "black"}
-                      name="save"
-                      size={25}
-                    />
-                    {isLoading ? "Updating..." : "Update"}
-                  </Text>
-                ) : null}
-              </View>
-            </ScrollView>
-          ) : null}
-          <View style={styles.container}>
-            {/* Add Button */}
-            <TouchableWithoutFeedback
-              onPressIn={() => handlePressIn(addScale)}
-              onPressOut={() => handlePressOut(addScale)}
-            >
-              <Animated.View
-                style={[styles.addButton, { transform: [{ scale: addScale }] }]}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#0f766e",
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  marginTop: 10,
+                }}
+                onPress={() => setModalVisible(false)}
               >
-                <AntDesign name="addfile" size={24} color="white" />
-              </Animated.View>
-            </TouchableWithoutFeedback>
-            {/* Scan QR Button */}
-            <TouchableWithoutFeedback
-              onPressIn={() => handlePressIn(qrScale)}
-              onPressOut={() => handlePressOut(qrScale)}
-              onPress={() => router.push("(tabs)/scanner")}
-            >
-              <Animated.View
-                style={[
-                  styles.addButton,
-                  { left: 100, transform: [{ scale: qrScale }] },
-                ]}
-              >
-                <AntDesign name="qrcode" size={24} color="white" />
-              </Animated.View>
-            </TouchableWithoutFeedback>
-            {/* Search Button */}
-            <View style={styles.searchContainer}>
-              <TouchableWithoutFeedback
-                onPressIn={() => handlePressIn(searchScale)}
-                onPressOut={() => handlePressOut(searchScale)}
-                onPress={() => setStatus(true)}
-              >
-                <Animated.View
-                  style={[
-                    styles.addButton,
-                    { left: 250, transform: [{ scale: searchScale }] },
-                  ]}
+                <Text
+                  style={{
+                    color: "#fff",
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: "bold",
+                  }}
                 >
-                  <AntDesign name="search1" size={24} color="white" />
-                </Animated.View>
-              </TouchableWithoutFeedback>
-
-              {status && <BottomSheet setStatus={setStatus} />}
+                  Close
+                </Text>
+              </TouchableOpacity>
             </View>
+          </View>
+        </Modal>
+        <View style={styles.row}>
+          <View style={styles.largeCard}>
+            <Text style={styles.cardTitle}>Total ICT Equipment</Text>
+            <Text style={styles.cardValue}>
+              {stats[0].total} <Text style={styles.cardSub}>| units</Text>
+            </Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: "97%" }]} />
+            </View>
+          </View>
 
-           
+          <View style={styles.largeCard}>
+            <Text style={styles.cardTitle}>Total Serviceable Equipment</Text>
+            <Text style={styles.cardValue}>
+              {stats[1].total} <Text style={styles.cardSub}>| units</Text>
+            </Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: "97%" }]} />
+            </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </>
+
+        <View style={styles.row}>
+          <View style={styles.smallCard}>
+            <Ionicons name="trash-sharp" size={28} color="#4da6ff" />
+            <Text style={styles.cardLabel}>Unserviceable</Text>
+            <Text style={styles.cardCount}>{stats[2].total}</Text>
+          </View>
+
+          <View style={styles.smallCard}>
+            <Ionicons name="calendar-sharp" size={28} color="#a64dff" />
+            <Text style={styles.cardLabel}>Outdated</Text>
+            <Text style={styles.cardCount}>{stats[3].total}</Text>
+          </View>
+
+          <View style={styles.smallCard}>
+            <Ionicons name="construct-outline" size={28} color="#ff8533" />
+            <Text style={styles.cardLabel}>Incomplete</Text>
+            <Text style={styles.cardCount}>{stats[4].total}</Text>
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.smallCard}>
+            <Ionicons name="desktop-sharp" size={28} color="#004D40" />
+            <Text style={styles.cardLabel}>Desktops</Text>
+            <Text style={styles.cardCount}>9</Text>
+          </View>
+          <View style={styles.smallCard}>
+            <Ionicons name="laptop-outline" size={28} color="#00cc99" />
+            <Text style={styles.cardLabel}>Laptops</Text>
+            <Text style={styles.cardCount}>11</Text>
+          </View>
+          <View style={styles.smallCard}>
+            <Ionicons name="print-outline" size={28} color="#996633" />
+            <Text style={styles.cardLabel}>Printers</Text>
+            <Text style={styles.cardCount}>0</Text>
+          </View>
+        </View>
+
+      
+        
+      </ScrollView>
+
+      {/* Floating Action Buttons */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: "#28a745" }]}
+          onPress={() => router.push("./scanner")}
+        >
+          <Ionicons name="qr-code-outline" size={26} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+        style={[styles.fab, { backgroundColor: "#ff9800" }]}
+          onPress={() => router.push("./form_insert")}
+        
+        >
+          <Ionicons name="add" size={26} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  searchContainer:{
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  dropdownItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: "black",
-  },
-  container: {
-    backgroundColor: "white",
-    padding: 1,
-    flex: 1,
-  },
-  headerButton: {
-    padding: 10,
-    marginLeft: 10,
-  },
-  headerButtonText: {
-    color: "#fff",
-    fontSize: 16,
+  container: { flex: 1, backgroundColor: "#fff", padding: 16, marginTop: 0 },
+  header: {
+    fontSize: 28,
     fontWeight: "bold",
+    color: "#1A237E",
+    marginBottom: 10,
+    marginTop: 30,
   },
-  tabs: {
+  searchBar: {
     flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#CFD8DC",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 16,
   },
-  tab: {
+  searchInput: { flex: 1, padding: 15, color: "#000" },
+  row: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 5,
-    paddingBottom: 5,
-    position: "relative",
-    overflow: "hidden",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
-  tabWrapper: {
+  largeCard: {
+    backgroundColor: "#CFD8DC",
     flex: 1,
-    borderColor: "#e5e7eb",
-    borderBottomWidth: 2,
-    alignItems: "center",
-    fontFamily: "PoppinsSemiBold",
-  },
-  tabText: {
-    textAlign: "center",
-    fontFamily: "PoppinsRegular",
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#6b7280",
-  },
-  textInputTitle: {
-    fontFamily: "PoppinsSemiBold",
-    fontSize: 20,
-    textAlign: "center",
-    color: "#1B5E20",
-  },
-  placeholder: {
-    flex: 1,
-    paddingVertical: 24,
-    paddingHorizontal: 6,
-    backgroundColor: "transparent",
-    justifyContent:'center'
-  },
-  subTitle: {
-    marginBottom: 16,
-    textAlign: "center",
-    fontSize: 19,
-    color: "#1B5E20",
-    fontFamily: "PoppinsSemiBold",
-  },
-  inputText: {
-    fontFamily: "PoppinsSemiBold",
-    color: "#00695C",
-    fontSize: 14,
-  },
-  input: {
-    height: 50,
-    borderColor: "gray",
-    fontFamily: "PoppinsRegular",
-
-    borderWidth: 0.5,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    marginBottom: 16,
-    fontSize: 14,
-  },
-  inputFocused: {
-    borderColor: "#B2DFDB",
-    borderWidth: 2,
-  },
-  dropdown: {
-    height: 50,
-    borderColor: "gray",
-    borderWidth: 0.5,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    marginBottom: 16,
-  },
-  placeholderStyle: {
-    fontSize: 16,
-  },
-  selectedTextStyle: {
-    fontSize: 14,
-    fontFamily: "PoppinsBold",
-  },
-  content: {
-    marginTop: 2,
-    paddingBottom: 0,
-    padding: 20,
-  },
-  icon: {
-    marginRight: 5,
-    color: "#fff",
-  },
-  buttonWrapper: {
-    marginTop: 16,
-    marginBottom: 50,
-    alignItems: "center",
-  },
-  buttonText: {
-    textAlign: "center",
-    color: "#fff",
-    fontFamily: "PoppinsSemiBold",
-    fontSize: 16,
     padding: 12,
-    backgroundColor: "#0f766e",
-    borderRadius: 8,
-    width: "80%",
+    borderRadius: 10,
+    marginHorizontal: 4,
   },
-
-  addButton: {
-    backgroundColor: "#0f766e", // Blue background
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Makes it round
-    justifyContent: "center",
+  cardTitle: { color: "#1A237E", fontSize: 14 },
+  cardValue: { color: "#1A237E", fontSize: 18, fontWeight: "bold" },
+  cardSub: { color: "#777", fontSize: 14 },
+  progressBar: {
+    height: 6,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    marginTop: 8,
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: "#1A237E",
+    borderRadius: 5,
+  },
+  smallCard: {
+    backgroundColor: "#CFD8DC",
+    flex: 1,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5, // For Android shadow
-    top: -50,
-    left: 175,
-    position: "absolute",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 10,
+    marginHorizontal: 4,
+    minWidth: 100,
   },
-  addButtonText: {
-    fontSize: 30,
+  cardLabel: {
+    color: "#1A237E",
+    marginTop: 6,
+    fontSize: 14,
+    textAlign: "center",
+    flexWrap: "wrap",
+    maxWidth: "100%",
+  },
+  cardCount: { color: "#777", fontSize: 12 },
+  fabContainer: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  fab: {
+    backgroundColor: "#007bff",
+    padding: 16,
+    borderRadius: 50,
+    elevation: 5,
+    marginTop: 10,
+  },
+  topBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    alignSelf: "center",
+    marginBottom: 12,
+    marginTop: -16,
+    maxWidth: "95%",
+    shadowColor: "#000",
+    backgroundColor: "#4CAF50", // solid green or replace with gradient later
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bannerLogo: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
+  topBannerText: {
     color: "#fff",
+    fontSize: 14,
     fontWeight: "bold",
+    flexShrink: 1,
+    marginTop: 15,
   },
 });
-
-export default Create;

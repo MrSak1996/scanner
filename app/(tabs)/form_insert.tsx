@@ -41,7 +41,7 @@ import EquipmentStats from "@/components/EquipmentStats";
 import { useAuth } from "./static_data/AuthContext";
 const router = useRouter();
 
-const Search = () => {
+const form_insert = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
   const { id } = useLocalSearchParams<{ qrCode: string }>();
   const { designation } = useLocalSearchParams<{ designation: string }>();
@@ -132,14 +132,6 @@ const Search = () => {
     if (section === "monitor2") setShowMonitor2(!showMonitor2);
     if (section === "ups") setShowUPS(!showUPS);
   };
- useEffect(() => {
-  if (id) {
-    searchUser(id);
-  } else if (qrCode) {
-    searchUser(qrCode);
-  }
-}, [id, qrCode]);
-
 
   useEffect(() => {
     fetchWorkData();
@@ -293,73 +285,6 @@ const Search = () => {
     }
   };
 
-  const updateUser = async () => {
-    try {
-      setIsLoading(true);
-      const payload = {
-        ...formData,
-        hdd_capacity:
-          hdd_capacity.find((item) => item.id === formData.hdd_capacity)
-            ?.label || "",
-        ssd_capacity:
-          hdd_capacity.find((item) => item.id === formData.ssd_capacity)
-            ?.label || "",
-      };
-      const url = "https://riis.denrcalabarzon.com/api/updateUser";
-      const response = await axios.post(url, payload);
-
-      if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          response.data.message || "User updated successfully."
-        );
-      } else {
-        Alert.alert("Error", "Unexpected response from the server.");
-      }
-    } catch (error) {
-      console.log("API Error Response:", error.response?.data);
-
-      // Extract message from API if available
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "An error occurred while processing your request.";
-
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updatePeripherals = async () => {
-    try {
-      setIsLoading(true);
-      const url = "https://riis.denrcalabarzon.com/api/updatePeripherals";
-      const response = await axios.post(url, formData);
-      if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          response.data.message || "Updated successfully."
-        );
-      } else {
-        Alert.alert("Error", "Unexpected response from the server.");
-      }
-    } catch (error) {
-      console.log("API Error Response:", error.response?.data);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "An error occurred while processing your request.";
-
-      Alert.alert("Error", errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleInputChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -385,19 +310,36 @@ const Search = () => {
     "denr4@_ken",
   ];
 
-  <View style={styles.buttonWrapper}>
-    {allowedUsernames.includes(user?.username) && (
-      <Text style={styles.buttonText} onPress={updateUser}>
-        <AntDesign
-          style={styles.icon}
-          color={isFocus ? "blue" : "black"}
-          name="save"
-          size={25}
-        />
-        {isLoading ? "Updating..." : user?.username}
-      </Text>
-    )}
-  </View>;
+  const insertData = async () => {
+    try {
+      setIsLoading(true);
+      // Assuming you have a backend API for inserting the data
+      const response = await axios.post(
+        "https://riis.denrcalabarzon.com/api/insertEquipmentData", // replace with the correct API endpoint
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      // Check if the insertion was successful
+      if (response.status === 200) {
+        Alert.alert("Success", "Data has been successfully inserted.");
+        // Optionally, you can reset the form data or navigate to another screen after successful submission
+        setFormData({}); // Reset the form data or navigate
+        router.push("/(tabs)/create"); // Navigate back to the create screen
+      }
+    } catch (error) {
+      console.error("Error inserting data:", error);
+      Alert.alert(
+        "Error",
+        "An error occurred while inserting the data. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -591,14 +533,17 @@ const Search = () => {
 
               <View style={styles.buttonWrapper}>
                 {allowedUsernames.includes(user?.username) && (
-                  <Text style={styles.buttonText} onPress={updateUser}>
+                  <Text style={styles.buttonText} onPress={insertData}>
+                    {" "}
+                    {/* Change this to insertData */}
                     <AntDesign
                       style={styles.icon}
                       color={isFocus ? "blue" : "black"}
                       name="save"
                       size={25}
                     />
-                    {isLoading ? "Updating..." : "Update"}
+                    {isLoading ? "Inserting..." : "Save"}{" "}
+                    {/* Update the text to show "Inserting..." */}
                   </Text>
                 )}
               </View>
@@ -710,14 +655,17 @@ const Search = () => {
               />
               <View style={styles.buttonWrapper}>
                 {allowedUsernames.includes(user?.username) && (
-                  <Text style={styles.buttonText} onPress={updateUser}>
+                  <Text style={styles.buttonText} onPress={insertData}>
+                    {" "}
+                    {/* Change this to insertData */}
                     <AntDesign
                       style={styles.icon}
                       color={isFocus ? "blue" : "black"}
                       name="save"
                       size={25}
                     />
-                    {isLoading ? "Updating..." : "Update"}
+                    {isLoading ? "Inserting..." : "Save"}{" "}
+                    {/* Update the text to show "Inserting..." */}
                   </Text>
                 )}
               </View>
@@ -735,7 +683,7 @@ const Search = () => {
               {showMonitor1 && (
                 <View style={styles.section}>
                   {/* Your Monitor 1 fields */}
-                   <CustomText
+                  <CustomText
                     label="QR Code"
                     value={formData.mon_qr_code1}
                     onChangeText={(value) =>
@@ -761,7 +709,6 @@ const Search = () => {
                     value={formData.mon_sn1}
                     onChangeText={(v) => handleInputChange("mon_sn1", v)}
                   />
-                 
 
                   <CustomText
                     label="Property Number:"
@@ -814,7 +761,7 @@ const Search = () => {
               {showMonitor2 && (
                 <View style={styles.section}>
                   {/* Your Monitor 2 fields */}
-                   <CustomText
+                  <CustomText
                     label="QR Code"
                     value={formData.mon_qr_code2}
                     onChangeText={(value) =>
@@ -852,8 +799,6 @@ const Search = () => {
                     focusedInput={focusedInput}
                     setFocusedInput={setFocusedInput}
                   />
-
-                 
 
                   <CustomText
                     label="Property Number:"
@@ -895,16 +840,19 @@ const Search = () => {
               )}
 
               {/* Save Button */}
-              <View style={styles.buttonWrapper}>
-                {user?.roles == 13 && (
-                  <Text style={styles.buttonText} onPress={updatePeripherals}>
+             <View style={styles.buttonWrapper}>
+                {allowedUsernames.includes(user?.username) && (
+                  <Text style={styles.buttonText} onPress={insertData}>
+                    {" "}
+                    {/* Change this to insertData */}
                     <AntDesign
                       style={styles.icon}
                       color={isFocus ? "blue" : "black"}
                       name="save"
                       size={25}
                     />
-                    {isLoading ? "Updating..." : "Update"}
+                    {isLoading ? "Inserting..." : "Save"}{" "}
+                    {/* Update the text to show "Inserting..." */}
                   </Text>
                 )}
               </View>
@@ -1076,4 +1024,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Search;
+export default form_insert;

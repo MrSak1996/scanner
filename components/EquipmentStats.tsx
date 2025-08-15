@@ -81,7 +81,9 @@ const EquipmentStats = ({ color }) => {
     try {
       setSearching(true);
       const response = await axios.get(
-        `${API_BASE_URL}/vw-gen-info?designation=${user?.roles}&search=${encodeURIComponent(searchQuery)}`
+        `${API_BASE_URL}/vw-gen-info?designation=${
+          user?.roles
+        }&search=${encodeURIComponent(searchQuery)}`
       );
       setSearchResults(response.data.data);
       setModalVisible(true);
@@ -91,18 +93,18 @@ const EquipmentStats = ({ color }) => {
       setSearching(false);
     }
   };
-    const handleEdit = (item) => {
+
+  const handleEdit = (item) => {
     setModalVisible(false); // hide modal
     setTimeout(() => {
       // wait for modal animation
       router.push({
         pathname: "/(tabs)/search",
-        
-        params: { id: item.qr_code },
+
+        params: { id: item },
       });
     }, 300);
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,7 +151,7 @@ const EquipmentStats = ({ color }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-       <Modal
+      <Modal
         visible={modalVisible}
         transparent
         animationType="slide"
@@ -218,11 +220,15 @@ const EquipmentStats = ({ color }) => {
                       {item.qr_code || "N/A"}
                     </Text>
                     <Text style={{ color: "#555", marginBottom: 4 }}>
-                      <Text style={{ fontWeight: "600" }}>Primary Monitor Code:</Text>{" "}
+                      <Text style={{ fontWeight: "600" }}>
+                        Primary Monitor Code:
+                      </Text>{" "}
                       {item.mon_qr_code1 || "N/A"}
                     </Text>
-                     <Text style={{ color: "#555", marginBottom: 4 }}>
-                      <Text style={{ fontWeight: "600" }}>Secondary Monitor Code:</Text>{" "}
+                    <Text style={{ color: "#555", marginBottom: 4 }}>
+                      <Text style={{ fontWeight: "600" }}>
+                        Secondary Monitor Code:
+                      </Text>{" "}
                       {item.mon_qr_code2 || "N/A"}
                     </Text>
                     <Text style={{ color: "#555", marginBottom: 4 }}>
@@ -236,7 +242,7 @@ const EquipmentStats = ({ color }) => {
 
                     {/* Edit Button */}
                     <TouchableOpacity
-                      onPress={() => handleEdit(item)} // use your actual function
+                      onPress={() => handleEdit(item.qr_code)} // use your actual function
                       style={{
                         backgroundColor: "#607D8B",
                         paddingVertical: 10,
@@ -292,7 +298,7 @@ const EquipmentStats = ({ color }) => {
       </View>
 
       {/* Buttons */}
-     
+
       <TouchableOpacity
         style={styles.buttonSecondary}
         onPress={() => setSearchVisible(!searchVisible)}
@@ -323,13 +329,20 @@ const EquipmentStats = ({ color }) => {
 
       {/* Stats */}
       {loading ? (
-        <ActivityIndicator size="large" color="#08254b" style={{ marginTop: 20 }} />
+        <ActivityIndicator
+          size="large"
+          color="#08254b"
+          style={{ marginTop: 20 }}
+        />
       ) : (
         <Animated.View style={{ opacity: fadeAnim, width: "100%" }}>
           {stats.map((item, index) => (
             <View
               key={index}
-              style={[styles.card, { backgroundColor: cardColors[index % cardColors.length] }]}
+              style={[
+                styles.card,
+                { backgroundColor: cardColors[index % cardColors.length] },
+              ]}
             >
               <View style={styles.iconContainer}>
                 <AntDesign name={item.icon} size={30} color="#fff" />
@@ -342,7 +355,7 @@ const EquipmentStats = ({ color }) => {
           ))}
         </Animated.View>
       )}
-      <TabLayout/>
+      <TabLayout />
     </ScrollView>
   );
 };
@@ -448,7 +461,6 @@ const styles = StyleSheet.create({
   },
 });
 
-
 const hexToRgba = (hex, opacity) => {
   const bigint = parseInt(hex.slice(1), 16);
   const r = (bigint >> 16) & 255;
@@ -456,7 +468,5 @@ const hexToRgba = (hex, opacity) => {
   const b = bigint & 255;
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
-
-
 
 export default EquipmentStats;
