@@ -44,71 +44,49 @@ const router = useRouter();
 const form_insert = () => {
   const { qrCode } = useLocalSearchParams<{ qrCode: string }>();
   const { id } = useLocalSearchParams<{ qrCode: string }>();
+  const [control_no, setId] = useState("R4A-RICT-0001"); // this will hold the control_no
+
   const { designation } = useLocalSearchParams<{ designation: string }>();
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [formData, setFormData] = useState({
-    qrCode: qrCode || "",
-    equipment_status: "",
-    control_id: "",
-    item_status: "",
-    monitor1Status: "",
-    monitor2Status: "",
-    ups_status: "",
-    division: "",
-    user: "",
-    control_no: "",
-    division_id: "",
-    division_title: "",
+    control_no: "R4A-RICT-01862",
+    qr_code: qrCode || "",
     acct_person: "",
-    actual_user: "",
-    employment_title: "",
-    actual_employment_type: "",
-    work_nature_id: "",
-    nature_work_title: "",
-    equipment_type: "",
-    equipment_title: "",
-    property_no: "",
-    serial_no: "",
     brand: "",
     model: "",
-    year_acquired: "",
+    property_no: "",
+    serial_no: "",
     acquisition_cost: "",
-    range_category: "",
-    range_title: "",
     processor: "",
+    selectedDivision: "", // ✅ add
+    selectedAcctDivision: "", // ✅ add
+    selectedActualDivision: "", // ✅ add
+    selectedWorkNature: "", // ✅ add
+    selectedSection: "",
+    selectedRangeCategory: "",
+    selectedEquipmentType: "",
+    actual_user: "",
+    sex: "",
+    year_acquired: "",
+    remarks: "",
+    status: "",
+    shelf_life: "",
+    item_status: "",
+    actual_employment_type: "",
+
+    specs_processor: "",
     specs_net: "",
     specs_gpu: "",
-    dedicated_information: "",
+    specs_gpu_dedic_info: "",
+    specs_net_iswireless: "",
+    specs_ram_capacity: "",
     ram_type: "",
-    ram_capacity: "",
-    no_of_hdd: "",
-    no_of_ssd: "",
-    hdd_capacity: "",
-    ssd_capacity: "",
-    wireless_type: "",
+    specs_hdd: "",
+    specs_ssd: "",
+    specs_ssd_capacity: "",
+    specs_hdd_capacity: "",
     os_installed: "",
-    mon_brand_model1: "",
-    mon_brand_model2: "",
-    monitor1Model: "",
-    monitor2Model: "",
-    mon_sn1: "",
-    mon_sn2: "",
-    mon_qr_code1: "",
-    mon_qr_code2: "",
-    mon_pro_no1: "",
-    mon_pro_no2: "",
-    mon_acct_user1: "",
-    mon_acct_user2: "",
-    mon_actual_user1: "",
-    mon_actual_user2: "",
-    ups_qr_code: "",
-    ups_brand: "",
-    ups_model: "",
-    ups_acct_user: "",
-    ups_actual_user: "",
-    ups_property_no: "",
-    ups_sn: "",
   });
 
   const { user } = useAuth();
@@ -139,6 +117,7 @@ const form_insert = () => {
     fetchDivisionData();
     fetchEmployment();
     fetchRangeCategory();
+    // getControlNo();
   }, []);
 
   const fetchWorkData = async () => {
@@ -289,6 +268,19 @@ const form_insert = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const getControlNo = async () => {
+    try {
+      const userId = user?.userId;
+
+      setIsLoading(true);
+      const response = await axios.get(
+        `https://riis.denrcalabarzon.com/api/getControlNo?id=${userId}`
+      );
+      formData.control_no = response.data.control_no;
+      setId(response.data.control_no); // ✅ store control_no in id
+    } catch (error) {}
+  };
+
   const [val, setTabValue] = useState(search_tabs[0].name);
   const allowedUsernames = [
     "denr4@_rict",
@@ -313,10 +305,40 @@ const form_insert = () => {
   const insertData = async () => {
     try {
       setIsLoading(true);
-      // Assuming you have a backend API for inserting the data
+      const payload = {
+        id: user?.userId,
+        registered_loc: user?.roles || 1,
+        control_no: formData.control_no,
+        qr_code: formData.qr_code,
+        acct_person: formData.acct_person,
+        actual_user: formData.actual_user,
+        employmentType: formData.actual_employment_type, // backend expects this name
+        brand: formData.brand,
+        model: formData.model,
+        property_no: formData.property_no,
+        serial_no: formData.serial_no,
+        acquisition_cost: formData.acquisition_cost,
+        processor: formData.processor,
+
+        // 🔑 match backend validation keys
+        selectedDivision: formData.selectedDivision,
+        selectedAcctDivision: formData.selectedAcctDivision,
+        selectedActualDivision: formData.selectedActualDivision,
+        selectedWorkNature: formData.selectedWorkNature,
+        selectedSection: formData.selectedSection,
+        selectedRangeCategory: formData.selectedRangeCategory,
+        selectedEquipmentType: formData.selectedEquipmentType,
+
+        sex: formData.sex,
+        year_acquired: formData.year_acquired,
+        remarks: formData.remarks,
+        status: formData.item_status, // backend expects "status"
+        shelf_life: formData.shelf_life,
+      };
+
       const response = await axios.post(
-        "https://riis.denrcalabarzon.com/api/insertEquipmentData", // replace with the correct API endpoint
-        formData,
+        "https://riis.denrcalabarzon.com/api/post_insert_gen_info", // replace with the correct API endpoint
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -327,11 +349,62 @@ const form_insert = () => {
       if (response.status === 200) {
         Alert.alert("Success", "Data has been successfully inserted.");
         // Optionally, you can reset the form data or navigate to another screen after successful submission
-        setFormData({}); // Reset the form data or navigate
+        // setFormData({}); // Reset the form data or navigate
         router.push("/(tabs)/create"); // Navigate back to the create screen
       }
     } catch (error) {
-      console.error("Error inserting data:", error);
+      console.error(
+        "Error inserting data:",
+        error.response?.data || error.message
+      );
+      Alert.alert(
+        "Error",
+        "An error occurred while inserting the data. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const insertSpecs = async () => {
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        control_id:           formData.control_no,   
+        specs_processor:      formData.specs_processor,
+        specs_net:            formData.specs_net,
+        specs_net_iswireless: formData.specs_net_iswireless ,
+        specs_gpu:            formData.specs_gpu,    
+        specs_gpu_dedic_info: formData.specs_gpu_dedic_info,
+        specs_ram:            formData.ram_type,     
+        specs_ram_capacity:   formData.specs_ram_capacity,
+        specs_hdd:            formData.specs_hdd,
+        specs_hdd_capacity:   hdd_capacity.find((item) => item.id == formData.specs_hdd_capacity)?.label || "",
+        specs_ssd:            formData.specs_ssd,
+        specs_ssd_capacity:   hdd_capacity.find((item) => item.id == formData.specs_ssd_capacity)?.label || "",
+        os_installed:         formData.os_installed,
+    };
+
+      const response = await axios.post(
+        "https://riis.denrcalabarzon.com/api/post_insert_specs_info", // replace with the correct API endpoint
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.status === 200) {
+        Alert.alert("Success", "Data has been successfully inserted.");
+        // setFormData({}); // Reset the form data or navigate
+        router.push("/(tabs)/create"); 
+      }
+    } catch (error) {
+      console.error(
+        "Error inserting specification data:",
+        error.response?.data || error.message
+      );
       Alert.alert(
         "Error",
         "An error occurred while inserting the data. Please try again."
@@ -423,9 +496,17 @@ const form_insert = () => {
               keyboardShouldPersistTaps="handled"
             >
               <CustomText
+                label="Control No"
+                value="R4A-RICT-01862"
+                onChangeText={(value) => handleInputChange("control_no", value)}
+                focusedInput={focusedInput}
+                setFocusedInput={setFocusedInput}
+              />
+
+              <CustomText
                 label="QR Code:"
                 value={id}
-                onChangeText={(value) => handleInputChange("qrCode", value)}
+                onChangeText={(value) => handleInputChange("qr_code", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
@@ -433,8 +514,10 @@ const form_insert = () => {
               <CustomDropdown
                 label="Division:"
                 data={divisionData}
-                value={formData.division_id}
-                onChange={(value) => handleInputChange("division_id", value)}
+                value={formData.selectedDivision}
+                onChange={(value) =>
+                  handleInputChange("selectedDivision", value)
+                }
               />
 
               <CustomText
@@ -470,20 +553,28 @@ const form_insert = () => {
                 label="Nature of Work:"
                 data={workData}
                 value={formData.actual_employment_type}
-                onChange={(value) => handleInputChange("work_nature_id", value)}
+                onChange={(value) =>
+                  handleInputChange("selectedWorkNature", value)
+                }
               />
+
               <CustomDropdown
                 label="Equipment Type:"
                 data={equipmentList}
                 value={formData.equipment_type}
-                onChange={(value) => handleInputChange("equipment_type", value)}
+                onChange={(value) =>
+                  handleInputChange("selectedEquipmentType", value)
+                }
               />
               <CustomDropdown
                 label="Range Category:"
                 data={rangeData}
                 value={formData.range_category}
-                onChange={(value) => handleInputChange("range_category", value)}
+                onChange={(value) =>
+                  handleInputChange("selectedRangeCategory", value)
+                }
               />
+
               <CustomDropdown
                 label="Year Acquired:"
                 data={yearData}
@@ -506,6 +597,7 @@ const form_insert = () => {
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
+
               <CustomText
                 label="Model:"
                 value={formData.model}
@@ -554,9 +646,18 @@ const form_insert = () => {
               keyboardShouldPersistTaps="handled"
             >
               <CustomText
+                label="Control No"
+                value={formData.control_no}
+                onChangeText={(value) => handleInputChange("control_no", value)}
+                focusedInput={focusedInput}
+                setFocusedInput={setFocusedInput}
+              />
+              <CustomText
                 label="Processor:"
-                value={formData.processor}
-                onChangeText={(value) => handleInputChange("processor", value)}
+                value={formData.specs_processor}
+                onChangeText={(value) =>
+                  handleInputChange("specs_processor", value)
+                }
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
@@ -571,8 +672,10 @@ const form_insert = () => {
               <CustomDropdown
                 label="Wireless Type:"
                 data={wireless_type}
-                value={formData.wireless_type}
-                onChange={(value) => handleInputChange("wireless_type", value)}
+                value={formData.specs_net_iswireless}
+                onChange={(value) =>
+                  handleInputChange("specs_net_iswireless", value)
+                }
               />
 
               <CustomDropdown
@@ -584,9 +687,9 @@ const form_insert = () => {
 
               <CustomText
                 label="Dedicated Information:"
-                value={formData.dedicated_information}
+                value={formData.specs_gpu_dedic_info}
                 onChangeText={(value) =>
-                  handleInputChange("dedicated_information", value)
+                  handleInputChange("specs_gpu_dedic_info", value)
                 }
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
@@ -601,9 +704,9 @@ const form_insert = () => {
 
               <CustomText
                 label="RAM Capacity:"
-                value={formData.ram_capacity}
+                value={formData.specs_ram_capacity}
                 onChangeText={(value) =>
-                  handleInputChange("ram_capacity", value)
+                  handleInputChange("specs_ram_capacity", value)
                 }
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
@@ -611,37 +714,30 @@ const form_insert = () => {
 
               <CustomText
                 label="Number of HDD's:"
-                value={formData.no_of_hdd}
-                onChangeText={(value) => handleInputChange("no_of_hdd", value)}
+                value={formData.specs_hdd}
+                onChangeText={(value) => handleInputChange("specs_hdd", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
               <CustomText
                 label="Number of SDD's:"
-                value={formData.no_of_ssd}
-                onChangeText={(value) => handleInputChange("no_of_ssd", value)}
+                value={formData.specs_ssd}
+                onChangeText={(value) => handleInputChange("specs_ssd", value)}
                 focusedInput={focusedInput}
                 setFocusedInput={setFocusedInput}
               />
               <CustomDropdown
                 label="HDD Capacity:"
                 data={hdd_capacity}
-                value={formData.hdd_capacity}
-                onChange={(id) => handleInputChange("hdd_capacity", id)}
+                value={formData.specs_hdd_capacity}
+                onChange={(id) => handleInputChange("specs_hdd_capacity", id)}
               />
 
               <CustomDropdown
                 label="SSD Capacity:"
                 data={hdd_capacity}
-                value={formData.hdd_capacity}
-                onChange={(id) => handleInputChange("hdd_capacity", id)}
-              />
-
-              <CustomDropdown
-                label="SSD Capacity:"
-                data={hdd_capacity}
-                value={formData.ssd_capacity}
-                onChange={(id) => handleInputChange("ssd_capacity", id)}
+                value={formData.specs_ssd_capacity}
+                onChange={(id) => handleInputChange("specs_ssd_capacity", id)}
               />
 
               <CustomText
@@ -655,7 +751,7 @@ const form_insert = () => {
               />
               <View style={styles.buttonWrapper}>
                 {allowedUsernames.includes(user?.username) && (
-                  <Text style={styles.buttonText} onPress={insertData}>
+                  <Text style={styles.buttonText} onPress={insertSpecs}>
                     {" "}
                     {/* Change this to insertData */}
                     <AntDesign
@@ -840,7 +936,7 @@ const form_insert = () => {
               )}
 
               {/* Save Button */}
-             <View style={styles.buttonWrapper}>
+              <View style={styles.buttonWrapper}>
                 {allowedUsernames.includes(user?.username) && (
                   <Text style={styles.buttonText} onPress={insertData}>
                     {" "}

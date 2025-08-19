@@ -64,7 +64,7 @@ export default function Home() {
         router.push({
           pathname: "../search",
           params: {
-            qrCode: data,
+            id: data,
             details: JSON.stringify(response.data),
           },
         });

@@ -45,7 +45,6 @@ const LoginScreen = () => {
 
       if (response.ok && data.api_token) {
         Alert.alert("Success", "Login successful!");
-        // console.log(data);
         setUser(data); // Store user data globally
       } else {
         Alert.alert("Error", data.message || "Invalid credentials.");
@@ -152,14 +151,15 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
-    height: 60,
+    height: 70,
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 15,
     fontFamily: "PoppinsRegular",
-    fontWeight: "bold"
+    fontSize:40,
+    textAlign:"center"
   },
   button: {
     width: "100%",
